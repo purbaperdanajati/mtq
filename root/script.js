@@ -357,7 +357,7 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
         await new Promise(resolve => setTimeout(resolve, 500));
 
         // INSTRUKSI: Ganti URL_APPS_SCRIPT dengan URL deployment Apps Script Anda
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/d/YOUR_APPS_SCRIPT_ID/usercopy';
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxIErnnyQxU9SFFsxVeQM-fWi8vYdMocR05CiR_ByR4W60DtAqtVwrqC2R_-Di3PxBB/exec';
 
         // Untuk demo, simulasikan success
         const isDemo = true;
