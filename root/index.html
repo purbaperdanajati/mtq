@@ -160,8 +160,8 @@
                         <label for="jenisKelamin">Jenis Kelamin *</label>
                         <select id="jenisKelamin" name="jenisKelamin">
                             <option value="">-- Pilih Jenis Kelamin --</option>
-                            <option value="Putra">Putra (Laki-laki)</option>
-                            <option value="Putri">Putri (Perempuan)</option>
+                            <option value="Laki-laki">Laki-laki</option>
+                            <option value="Perempuan">Perempuan</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -267,6 +267,19 @@
             <div class="result-title" id="resultTitle"></div>
             <div class="result-message" id="resultMessage"></div>
             <button class="result-button" onclick="closeResultModal()">Tutup</button>
+        </div>
+    </div>
+
+    <!-- Custom Confirmation Modal -->
+    <div id="confirmModal" class="confirm-modal">
+        <div class="confirm-content">
+            <div class="confirm-icon">⚠️</div>
+            <div class="confirm-title" id="confirmTitle">Konfirmasi</div>
+            <div class="confirm-message" id="confirmMessage">Apakah Anda yakin?</div>
+            <div class="confirm-buttons">
+                <button class="btn-confirm-cancel" onclick="closeConfirmModal(false)">Batal</button>
+                <button class="btn-confirm-ok" onclick="closeConfirmModal(true)">Ya, Lanjutkan</button>
+            </div>
         </div>
     </div>
 

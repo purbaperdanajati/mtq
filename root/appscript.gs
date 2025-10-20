@@ -32,6 +32,17 @@ function doPost(e) {
       addHeaders(sheet);
     }
     
+    // Check for duplicates
+    Logger.log('Checking for duplicate NIK/Name');
+    const nikList = formData.nikList ? JSON.parse(formData.nikList) : [];
+    const nameList = formData.nameList ? JSON.parse(formData.nameList) : [];
+    
+    const duplicateCheck = checkDuplicates(sheet, nikList, nameList, formData.cabang);
+    if (!duplicateCheck.isValid) {
+      Logger.log('Duplicate found: ' + duplicateCheck.message);
+      return createResponse(false, duplicateCheck.message);
+    }
+    
     // Process file uploads
     Logger.log('Processing file uploads...');
     const fileLinks = processFileUploads(e, formData);
@@ -52,6 +63,92 @@ function doPost(e) {
     Logger.log('Error message: ' + error.message);
     Logger.log('Error stack: ' + error.stack);
     return createResponse(false, 'Error: ' + error.toString());
+  }
+}
+
+// ===== CHECK DUPLICATES =====
+function checkDuplicates(sheet, nikList, nameList, cabang) {
+  try {
+    const lastRow = sheet.getLastRow();
+    if (lastRow <= 1) {
+      // No data yet, no duplicates possible
+      return { isValid: true };
+    }
+    
+    // Get all data from sheet (skip header row)
+    const dataRange = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn());
+    const data = dataRange.getValues();
+    
+    // Column indices (0-based after getting values)
+    const cabangCol = 3; // Cabang Lomba column
+    const nikCol = 6; // NIK column
+    const namaCol = 7; // Nama Lengkap column
+    const member1NikCol = 18; // Anggota Tim #1 - NIK
+    const member1NamaCol = 19; // Anggota Tim #1 - Nama
+    const member2NikCol = 30; // Anggota Tim #2 - NIK
+    const member2NamaCol = 31; // Anggota Tim #2 - Nama
+    const member3NikCol = 42; // Anggota Tim #3 - NIK
+    const member3NamaCol = 43; // Anggota Tim #3 - Nama
+    
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+      const rowCabang = row[cabangCol];
+      
+      // Only check duplicates within same cabang
+      if (rowCabang !== cabang) {
+        continue;
+      }
+      
+      // Collect all NIKs and names from this row
+      const existingNiks = [
+        row[nikCol],
+        row[member1NikCol],
+        row[member2NikCol],
+        row[member3NikCol]
+      ].filter(nik => nik && nik !== '-' && nik.toString().trim() !== '');
+      
+      const existingNames = [
+        row[namaCol],
+        row[member1NamaCol],
+        row[member2NamaCol],
+        row[member3NamaCol]
+      ].filter(name => name && name !== '-' && name.toString().trim() !== '');
+      
+      // Check for NIK duplicates
+      for (let newNik of nikList) {
+        if (newNik && newNik.trim() !== '') {
+          for (let existingNik of existingNiks) {
+            if (existingNik.toString().trim() === newNik.trim()) {
+              return {
+                isValid: false,
+                message: `NIK ${newNik} sudah terdaftar di cabang ${cabang}. Peserta tidak boleh mendaftar ganda.`
+              };
+            }
+          }
+        }
+      }
+      
+      // Check for Name duplicates (case-insensitive)
+      for (let newName of nameList) {
+        if (newName && newName.trim() !== '') {
+          for (let existingName of existingNames) {
+            if (existingName.toString().trim().toLowerCase() === newName.trim().toLowerCase()) {
+              return {
+                isValid: false,
+                message: `Nama "${newName}" sudah terdaftar di cabang ${cabang}. Peserta tidak boleh mendaftar ganda.`
+              };
+            }
+          }
+        }
+      }
+    }
+    
+    return { isValid: true };
+    
+  } catch (error) {
+    Logger.log('Error in checkDuplicates: ' + error.message);
+    // If error in duplicate check, allow registration but log it
+    return { isValid: true };
   }
 }
 

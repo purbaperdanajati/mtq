@@ -1,4 +1,64 @@
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzywcDai3PkF23y5vSnFqgbkGKmN8roJWGr_vM97a7Ngd62bw-bm8lgf8iNCPgynqNV/exec';
+// Add listeners to all personal form inputs
+['nik', 'nama', 'jenisKelamin', 'tempatLahir', 'alamat', 'noTelepon', 'email', 'namaRek', 'noRek', 'namaBank'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+        el.addEventListener('input', updateSubmitButtonState);
+        el.addEventListener('change', updateSubmitButtonState);
+    }
+});
+
+// Custom Confirm Modal Functions
+function showConfirmModal(title, message) {
+    return new Promise((resolve) => {
+        document.getElementById('confirmTitle').textContent = title;
+        document.getElementById('confirmMessage').textContent = message;
+        document.getElementById('confirmModal').classList.add('show');
+        
+        confirmCallback = resolve;
+    });
+}
+
+function closeConfirmModal(result) {
+    document.getElementById('confirmModal').classList.remove('show');
+    if (confirmCallback) {
+        confirmCallback(result);
+        confirmCallback = null;
+    }
+}
+
+async function resetForm() {
+    const confirmed = await showConfirmModal(
+        'Konfirmasi Bersihkan Form',
+        'Apakah Anda yakin ingin membersihkan semua isian form?\n\nSemua data yang sudah diisi akan hilang.'
+    );
+    
+    if (!confirmed) {
+        Logger.log('Form reset cancelled by user');
+        return;
+    }
+    
+    Logger.log('Resetting form');
+    document.getElementById('registrationForm').reset();
+    document.getElementById('umur').value = '';
+    document.getElementById('ageRequirement').style.display = 'none';
+    document.getElementById('dataDiriSection').style.display = 'none';
+    document.getElementById('rekeningPersonalSection').style.display = 'none';
+    document.getElementById('personalSection').classList.remove('show');
+    document.getElementById('teamSection').classList.remove('show');
+    document.getElementById('teamMembers').innerHTML = '';
+    document.getElementById('personalDocs').innerHTML = '';
+    
+    uploadedFiles = {};
+    savedPersonalData = null;
+    savedTeamData = {};
+    
+    currentCabang = null;
+    currentTeamMemberCount = 2;
+    document.getElementById('submitBtn').disabled = false;
+    document.getElementById('submitStatusInfo').style.display = 'none';
+    
+    Logger.log('Form reset complete');
+}const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby_n6DFjsRGYd0opzeaYa2lvy36LgrdC0Or6C226Ip7LjRQ5qV8-6zVXeyitU1yf9Ur/exec';
 
 // Logger utility
 const Logger = {
@@ -43,6 +103,21 @@ let currentCabang = null;
 let currentTeamMemberCount = 2;
 let uploadedFiles = {};
 let savedPersonalData = null;
+let savedTeamData = {};
+let confirmCallback = null;
+
+// Store existing registrations for duplicate check
+let existingRegistrations = [];
+
+async function loadExistingRegistrations() {
+    try {
+        Logger.log('Loading existing registrations for duplicate check');
+        // TODO: Implement API call to get existing data from spreadsheet
+        // For now, we'll check on server-side
+    } catch (error) {
+        Logger.error('Failed to load existing registrations', error);
+    }
+}
 
 function updateProgress(percent) {
     const fill = document.getElementById('progressFill');
@@ -75,7 +150,103 @@ function savePersonalData() {
         noRek: document.getElementById('noRek')?.value || '',
         namaBank: document.getElementById('namaBank')?.value || ''
     };
+    
+    // Save uploaded files
+    const savedFiles = {};
+    for (let i = 1; i <= 5; i++) {
+        if (uploadedFiles[`doc${i}`]) {
+            savedFiles[`doc${i}`] = uploadedFiles[`doc${i}`];
+        }
+    }
+    savedPersonalData.files = savedFiles;
+    
     Logger.log('Personal data saved', savedPersonalData);
+}
+
+function saveTeamData() {
+    Logger.log('Saving team data before member count change');
+    savedTeamData = {
+        namaRegu: document.getElementById('namaRegu')?.value || '',
+        members: {}
+    };
+    
+    for (let i = 1; i <= currentTeamMemberCount; i++) {
+        const memberData = {
+            nik: document.querySelector(`[name="memberNik${i}"]`)?.value || '',
+            name: document.querySelector(`[name="memberName${i}"]`)?.value || '',
+            jenisKelamin: document.querySelector(`[name="memberJenisKelamin${i}"]`)?.value || '',
+            tempatLahir: document.querySelector(`[name="memberTempatLahir${i}"]`)?.value || '',
+            birthDate: document.querySelector(`[name="memberBirthDate${i}"]`)?.value || '',
+            umur: document.querySelector(`[name="memberUmur${i}"]`)?.value || '',
+            alamat: document.querySelector(`[name="memberAlamat${i}"]`)?.value || '',
+            noTelepon: document.querySelector(`[name="memberNoTelepon${i}"]`)?.value || '',
+            email: document.querySelector(`[name="memberEmail${i}"]`)?.value || '',
+            namaRek: document.querySelector(`[name="memberNamaRek${i}"]`)?.value || '',
+            noRek: document.querySelector(`[name="memberNoRek${i}"]`)?.value || '',
+            namaBank: document.querySelector(`[name="memberNamaBank${i}"]`)?.value || '',
+            files: {}
+        };
+        
+        // Save files for this member
+        for (let d = 1; d <= 5; d++) {
+            if (uploadedFiles[`teamDoc${i}_${d}`]) {
+                memberData.files[`doc${d}`] = uploadedFiles[`teamDoc${i}_${d}`];
+            }
+        }
+        
+        savedTeamData.members[i] = memberData;
+    }
+    
+    Logger.log('Team data saved', savedTeamData);
+}
+
+function restoreTeamData() {
+    Logger.log('Restoring team data after member count change');
+    
+    if (!savedTeamData || !savedTeamData.members) {
+        Logger.log('No saved team data to restore');
+        return;
+    }
+    
+    // Restore nama regu
+    if (savedTeamData.namaRegu) {
+        document.getElementById('namaRegu').value = savedTeamData.namaRegu;
+    }
+    
+    // Restore member data
+    for (let i in savedTeamData.members) {
+        const memberData = savedTeamData.members[i];
+        
+        // Only restore if member form exists
+        if (document.querySelector(`[name="memberNik${i}"]`)) {
+            document.querySelector(`[name="memberNik${i}"]`).value = memberData.nik;
+            document.querySelector(`[name="memberName${i}"]`).value = memberData.name;
+            document.querySelector(`[name="memberJenisKelamin${i}"]`).value = memberData.jenisKelamin;
+            document.querySelector(`[name="memberTempatLahir${i}"]`).value = memberData.tempatLahir;
+            document.querySelector(`[name="memberBirthDate${i}"]`).value = memberData.birthDate;
+            document.querySelector(`[name="memberUmur${i}"]`).value = memberData.umur;
+            document.querySelector(`[name="memberAlamat${i}"]`).value = memberData.alamat;
+            document.querySelector(`[name="memberNoTelepon${i}"]`).value = memberData.noTelepon;
+            document.querySelector(`[name="memberEmail${i}"]`).value = memberData.email;
+            document.querySelector(`[name="memberNamaRek${i}"]`).value = memberData.namaRek;
+            document.querySelector(`[name="memberNoRek${i}"]`).value = memberData.noRek;
+            document.querySelector(`[name="memberNamaBank${i}"]`).value = memberData.namaBank;
+            
+            // Restore files
+            for (let d in memberData.files) {
+                const docNum = d.replace('doc', '');
+                uploadedFiles[`teamDoc${i}_${docNum}`] = memberData.files[d];
+                const labelId = `teamDoc${i}_${docNum}Name`;
+                const label = document.getElementById(labelId);
+                if (label) {
+                    label.textContent = memberData.files[d].name;
+                    label.style.color = '#28a745';
+                }
+            }
+            
+            Logger.log(`Restored member ${i} data`);
+        }
+    }
 }
 
 function restoreToTeamMember1() {
@@ -104,6 +275,20 @@ function restoreToTeamMember1() {
             Logger.log(`Restored ${field.team}: ${savedPersonalData[field.saved]}`);
         }
     });
+    
+    // Restore files
+    if (savedPersonalData.files) {
+        for (let docKey in savedPersonalData.files) {
+            const docNum = docKey.replace('doc', '');
+            uploadedFiles[`teamDoc1_${docNum}`] = savedPersonalData.files[docKey];
+            const labelId = `teamDoc1_${docNum}Name`;
+            const label = document.getElementById(labelId);
+            if (label) {
+                label.textContent = savedPersonalData.files[docKey].name;
+                label.style.color = '#28a745';
+            }
+        }
+    }
 }
 
 function handleCabangChange() {
@@ -113,9 +298,11 @@ function handleCabangChange() {
     const dataDiriSection = document.getElementById('dataDiriSection');
     const rekeningPersonal = document.getElementById('rekeningPersonalSection');
     
-    // Save personal data before switching
+    // Save personal data AND FILES before switching
     if (currentCabang && !currentCabang.isTeam) {
         savePersonalData();
+    } else if (currentCabang && currentCabang.isTeam) {
+        saveTeamData();
     }
     
     document.getElementById('personalSection').classList.remove('show');
@@ -124,7 +311,7 @@ function handleCabangChange() {
     document.getElementById('teamMembers').innerHTML = '';
     document.getElementById('personalDocs').innerHTML = '';
     
-    uploadedFiles = {};
+    // Don't clear uploadedFiles - keep them for restore
     
     if (!data) {
         currentCabang = null;
@@ -147,9 +334,13 @@ function handleCabangChange() {
         dataDiriSection.style.display = 'none';
         rekeningPersonal.style.display = 'none';
         
-        // Restore personal data to team member 1
+        // Restore personal data to team member 1 OR restore existing team data
         setTimeout(() => {
-            restoreToTeamMember1();
+            if (savedPersonalData && Object.keys(savedPersonalData).length > 0) {
+                restoreToTeamMember1();
+            } else if (savedTeamData && Object.keys(savedTeamData).length > 0) {
+                restoreTeamData();
+            }
             updateSubmitButtonState();
         }, 100);
     } else {
@@ -158,6 +349,39 @@ function handleCabangChange() {
         rekeningPersonal.style.display = 'block';
         generatePersonalDocsForm();
         document.getElementById('personalSection').classList.add('show');
+        
+        // Restore personal data if available
+        setTimeout(() => {
+            if (savedPersonalData && Object.keys(savedPersonalData).length > 0) {
+                document.getElementById('nik').value = savedPersonalData.nik;
+                document.getElementById('nama').value = savedPersonalData.nama;
+                document.getElementById('jenisKelamin').value = savedPersonalData.jenisKelamin;
+                document.getElementById('tempatLahir').value = savedPersonalData.tempatLahir;
+                document.getElementById('tglLahir').value = savedPersonalData.tglLahir;
+                document.getElementById('umur').value = savedPersonalData.umur;
+                document.getElementById('alamat').value = savedPersonalData.alamat;
+                document.getElementById('noTelepon').value = savedPersonalData.noTelepon;
+                document.getElementById('email').value = savedPersonalData.email;
+                document.getElementById('namaRek').value = savedPersonalData.namaRek;
+                document.getElementById('noRek').value = savedPersonalData.noRek;
+                document.getElementById('namaBank').value = savedPersonalData.namaBank;
+                
+                // Restore files
+                if (savedPersonalData.files) {
+                    for (let docKey in savedPersonalData.files) {
+                        uploadedFiles[docKey] = savedPersonalData.files[docKey];
+                        const docNum = docKey.replace('doc', '');
+                        const labelId = `personalDoc${docNum}Name`;
+                        const label = document.getElementById(labelId);
+                        if (label) {
+                            label.textContent = savedPersonalData.files[docKey].name;
+                            label.style.color = '#28a745';
+                        }
+                    }
+                }
+            }
+            updateSubmitButtonState();
+        }, 100);
     }
     
     updateSubmitButtonState();
@@ -243,8 +467,8 @@ function generateTeamMemberHTML(i) {
                     <label>Jenis Kelamin ${isOptional ? '' : '*'}</label>
                     <select name="memberJenisKelamin${i}" ${isOptional ? '' : 'required'}>
                         <option value="">-- Pilih --</option>
-                        <option value="Putra">Putra (Laki-laki)</option>
-                        <option value="Putri">Putri (Perempuan)</option>
+                        <option value="Laki-laki">Laki-laki</option>
+                        <option value="Perempuan">Perempuan</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -341,21 +565,32 @@ function generateTeamMemberHTML(i) {
 function addTeamMember() {
     if (currentTeamMemberCount < 3) {
         Logger.log('Adding team member 3');
+        saveTeamData(); // Save before changing
         currentTeamMemberCount = 3;
         generateTeamForm(3);
-        updateSubmitButtonState();
+        setTimeout(() => {
+            restoreTeamData();
+            updateSubmitButtonState();
+        }, 100);
     }
 }
 
 function removeTeamMember() {
     if (currentTeamMemberCount === 3) {
         Logger.log('Removing team member 3');
+        saveTeamData(); // Save before changing
         currentTeamMemberCount = 2;
-        generateTeamForm(2);
+        
+        // Remove member 3 files from uploadedFiles
         for (let d = 1; d <= 5; d++) {
             delete uploadedFiles[`teamDoc3_${d}`];
         }
-        updateSubmitButtonState();
+        
+        generateTeamForm(2);
+        setTimeout(() => {
+            restoreTeamData();
+            updateSubmitButtonState();
+        }, 100);
     }
 }
 
@@ -778,7 +1013,13 @@ async function fileToBase64(file) {
 document.getElementById('registrationForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
-    if (!confirm('⚠️ Apakah Anda yakin semua data sudah benar?\n\nData yang sudah dikirim tidak dapat diubah.')) {
+    const confirmed = await showConfirmModal(
+        'Konfirmasi Pendaftaran',
+        'Apakah Anda yakin semua data sudah benar?\n\nData yang sudah dikirim tidak dapat diubah.'
+    );
+    
+    if (!confirmed) {
+        Logger.log('Form submission cancelled by user');
         return;
     }
     
@@ -800,10 +1041,20 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
         Logger.log('Basic data added');
         updateProgress(10);
         
+        // Collect NIK and Names for duplicate check
+        let nikList = [];
+        let nameList = [];
+        
         // Add personal or team data
         if (!currentCabang.isTeam) {
-            formData.append('nik', document.getElementById('nik').value);
-            formData.append('nama', document.getElementById('nama').value);
+            const nik = document.getElementById('nik').value;
+            const nama = document.getElementById('nama').value;
+            
+            nikList.push(nik);
+            nameList.push(nama);
+            
+            formData.append('nik', nik);
+            formData.append('nama', nama);
             formData.append('jenisKelamin', document.getElementById('jenisKelamin').value);
             formData.append('tempatLahir', document.getElementById('tempatLahir').value);
             formData.append('tglLahir', document.getElementById('tglLahir').value);
@@ -817,6 +1068,12 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
             Logger.log('Personal data added');
         } else {
             for (let i = 1; i <= currentTeamMemberCount; i++) {
+                const nik = document.querySelector(`[name="memberNik${i}"]`)?.value;
+                const nama = document.querySelector(`[name="memberName${i}"]`)?.value;
+                
+                if (nik) nikList.push(nik);
+                if (nama) nameList.push(nama);
+                
                 const fields = ['Nik', 'Name', 'JenisKelamin', 'TempatLahir', 'BirthDate', 'Umur', 'Alamat', 'NoTelepon', 'Email', 'NamaRek', 'NoRek', 'NamaBank'];
                 fields.forEach(field => {
                     const el = document.querySelector(`[name="member${field}${i}"]`);
@@ -825,6 +1082,10 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
             }
             Logger.log('Team data added for ' + currentTeamMemberCount + ' members');
         }
+        
+        // Send NIK and Name lists for duplicate check
+        formData.append('nikList', JSON.stringify(nikList));
+        formData.append('nameList', JSON.stringify(nameList));
         
         updateProgress(20);
         showLoadingOverlay(true, 'Mengkonversi file...');
@@ -875,7 +1136,29 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
             showResultModal(true, 'Registrasi Berhasil!', 
                 `Nama: ${displayName}\nCabang: ${currentCabang.name}\n\nData Anda telah tersimpan.\nEmail konfirmasi akan dikirim dalam 24 jam.`);
             Logger.log('=== FORM SUBMISSION SUCCESS ===');
-            setTimeout(() => resetForm(), 2000);
+            
+            // Auto clear form after success (no confirmation needed)
+            setTimeout(() => {
+                Logger.log('Auto-clearing form after successful submission');
+                document.getElementById('registrationForm').reset();
+                document.getElementById('umur').value = '';
+                document.getElementById('ageRequirement').style.display = 'none';
+                document.getElementById('dataDiriSection').style.display = 'none';
+                document.getElementById('rekeningPersonalSection').style.display = 'none';
+                document.getElementById('personalSection').classList.remove('show');
+                document.getElementById('teamSection').classList.remove('show');
+                document.getElementById('teamMembers').innerHTML = '';
+                document.getElementById('personalDocs').innerHTML = '';
+                
+                uploadedFiles = {};
+                savedPersonalData = null;
+                savedTeamData = {};
+                
+                currentCabang = null;
+                currentTeamMemberCount = 2;
+                document.getElementById('submitBtn').disabled = false;
+                document.getElementById('submitStatusInfo').style.display = 'none';
+            }, 2000);
         } else {
             Logger.error('Submission failed:', result.message);
             showResultModal(false, 'Error', result.message || 'Terjadi kesalahan saat menyimpan data');
