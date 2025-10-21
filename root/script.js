@@ -1,64 +1,4 @@
-// Add listeners to all personal form inputs
-['nik', 'nama', 'jenisKelamin', 'tempatLahir', 'alamat', 'noTelepon', 'email', 'namaRek', 'noRek', 'namaBank'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-        el.addEventListener('input', updateSubmitButtonState);
-        el.addEventListener('change', updateSubmitButtonState);
-    }
-});
-
-// Custom Confirm Modal Functions
-function showConfirmModal(title, message) {
-    return new Promise((resolve) => {
-        document.getElementById('confirmTitle').textContent = title;
-        document.getElementById('confirmMessage').textContent = message;
-        document.getElementById('confirmModal').classList.add('show');
-        
-        confirmCallback = resolve;
-    });
-}
-
-function closeConfirmModal(result) {
-    document.getElementById('confirmModal').classList.remove('show');
-    if (confirmCallback) {
-        confirmCallback(result);
-        confirmCallback = null;
-    }
-}
-
-async function resetForm() {
-    const confirmed = await showConfirmModal(
-        'Konfirmasi Bersihkan Form',
-        'Apakah Anda yakin ingin membersihkan semua isian form?\n\nSemua data yang sudah diisi akan hilang.'
-    );
-    
-    if (!confirmed) {
-        Logger.log('Form reset cancelled by user');
-        return;
-    }
-    
-    Logger.log('Resetting form');
-    document.getElementById('registrationForm').reset();
-    document.getElementById('umur').value = '';
-    document.getElementById('ageRequirement').style.display = 'none';
-    document.getElementById('dataDiriSection').style.display = 'none';
-    document.getElementById('rekeningPersonalSection').style.display = 'none';
-    document.getElementById('personalSection').classList.remove('show');
-    document.getElementById('teamSection').classList.remove('show');
-    document.getElementById('teamMembers').innerHTML = '';
-    document.getElementById('personalDocs').innerHTML = '';
-    
-    uploadedFiles = {};
-    savedPersonalData = null;
-    savedTeamData = {};
-    
-    currentCabang = null;
-    currentTeamMemberCount = 2;
-    document.getElementById('submitBtn').disabled = false;
-    document.getElementById('submitStatusInfo').style.display = 'none';
-    
-    Logger.log('Form reset complete');
-}const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby_n6DFjsRGYd0opzeaYa2lvy36LgrdC0Or6C226Ip7LjRQ5qV8-6zVXeyitU1yf9Ur/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyzXwstIz5DjqSDjhUVBVJUGaKo7H5ZpiBjAsa263CvjxYVc9DAskn1oC1AryTPRnFu/exec';
 
 // Logger utility
 const Logger = {
@@ -106,19 +46,6 @@ let savedPersonalData = null;
 let savedTeamData = {};
 let confirmCallback = null;
 
-// Store existing registrations for duplicate check
-let existingRegistrations = [];
-
-async function loadExistingRegistrations() {
-    try {
-        Logger.log('Loading existing registrations for duplicate check');
-        // TODO: Implement API call to get existing data from spreadsheet
-        // For now, we'll check on server-side
-    } catch (error) {
-        Logger.error('Failed to load existing registrations', error);
-    }
-}
-
 function updateProgress(percent) {
     const fill = document.getElementById('progressFill');
     if (fill) {
@@ -151,7 +78,6 @@ function savePersonalData() {
         namaBank: document.getElementById('namaBank')?.value || ''
     };
     
-    // Save uploaded files
     const savedFiles = {};
     for (let i = 1; i <= 5; i++) {
         if (uploadedFiles[`doc${i}`]) {
@@ -187,7 +113,6 @@ function saveTeamData() {
             files: {}
         };
         
-        // Save files for this member
         for (let d = 1; d <= 5; d++) {
             if (uploadedFiles[`teamDoc${i}_${d}`]) {
                 memberData.files[`doc${d}`] = uploadedFiles[`teamDoc${i}_${d}`];
@@ -208,16 +133,13 @@ function restoreTeamData() {
         return;
     }
     
-    // Restore nama regu
     if (savedTeamData.namaRegu) {
         document.getElementById('namaRegu').value = savedTeamData.namaRegu;
     }
     
-    // Restore member data
     for (let i in savedTeamData.members) {
         const memberData = savedTeamData.members[i];
         
-        // Only restore if member form exists
         if (document.querySelector(`[name="memberNik${i}"]`)) {
             document.querySelector(`[name="memberNik${i}"]`).value = memberData.nik;
             document.querySelector(`[name="memberName${i}"]`).value = memberData.name;
@@ -232,7 +154,6 @@ function restoreTeamData() {
             document.querySelector(`[name="memberNoRek${i}"]`).value = memberData.noRek;
             document.querySelector(`[name="memberNamaBank${i}"]`).value = memberData.namaBank;
             
-            // Restore files
             for (let d in memberData.files) {
                 const docNum = d.replace('doc', '');
                 uploadedFiles[`teamDoc${i}_${docNum}`] = memberData.files[d];
@@ -276,7 +197,6 @@ function restoreToTeamMember1() {
         }
     });
     
-    // Restore files
     if (savedPersonalData.files) {
         for (let docKey in savedPersonalData.files) {
             const docNum = docKey.replace('doc', '');
@@ -298,7 +218,6 @@ function handleCabangChange() {
     const dataDiriSection = document.getElementById('dataDiriSection');
     const rekeningPersonal = document.getElementById('rekeningPersonalSection');
     
-    // Save personal data AND FILES before switching
     if (currentCabang && !currentCabang.isTeam) {
         savePersonalData();
     } else if (currentCabang && currentCabang.isTeam) {
@@ -310,8 +229,6 @@ function handleCabangChange() {
     document.getElementById('ageRequirement').style.display = 'none';
     document.getElementById('teamMembers').innerHTML = '';
     document.getElementById('personalDocs').innerHTML = '';
-    
-    // Don't clear uploadedFiles - keep them for restore
     
     if (!data) {
         currentCabang = null;
@@ -334,7 +251,6 @@ function handleCabangChange() {
         dataDiriSection.style.display = 'none';
         rekeningPersonal.style.display = 'none';
         
-        // Restore personal data to team member 1 OR restore existing team data
         setTimeout(() => {
             if (savedPersonalData && Object.keys(savedPersonalData).length > 0) {
                 restoreToTeamMember1();
@@ -350,7 +266,6 @@ function handleCabangChange() {
         generatePersonalDocsForm();
         document.getElementById('personalSection').classList.add('show');
         
-        // Restore personal data if available
         setTimeout(() => {
             if (savedPersonalData && Object.keys(savedPersonalData).length > 0) {
                 document.getElementById('nik').value = savedPersonalData.nik;
@@ -366,7 +281,6 @@ function handleCabangChange() {
                 document.getElementById('noRek').value = savedPersonalData.noRek;
                 document.getElementById('namaBank').value = savedPersonalData.namaBank;
                 
-                // Restore files
                 if (savedPersonalData.files) {
                     for (let docKey in savedPersonalData.files) {
                         uploadedFiles[docKey] = savedPersonalData.files[docKey];
@@ -565,7 +479,7 @@ function generateTeamMemberHTML(i) {
 function addTeamMember() {
     if (currentTeamMemberCount < 3) {
         Logger.log('Adding team member 3');
-        saveTeamData(); // Save before changing
+        saveTeamData();
         currentTeamMemberCount = 3;
         generateTeamForm(3);
         setTimeout(() => {
@@ -578,10 +492,9 @@ function addTeamMember() {
 function removeTeamMember() {
     if (currentTeamMemberCount === 3) {
         Logger.log('Removing team member 3');
-        saveTeamData(); // Save before changing
+        saveTeamData();
         currentTeamMemberCount = 2;
         
-        // Remove member 3 files from uploadedFiles
         for (let d = 1; d <= 5; d++) {
             delete uploadedFiles[`teamDoc3_${d}`];
         }
@@ -598,7 +511,6 @@ function setupTeamFormListeners(memberCount) {
     Logger.log('Setting up team form listeners for ' + memberCount + ' members');
     
     for (let i = 1; i <= memberCount; i++) {
-        // File upload listeners
         for (let d = 1; d <= 5; d++) {
             const input = document.getElementById(`teamDoc${i}_${d}`);
             if (input) {
@@ -608,7 +520,6 @@ function setupTeamFormListeners(memberCount) {
             }
         }
         
-        // NIK validation
         const nikInput = document.querySelector(`input[name="memberNik${i}"]`);
         if (nikInput) {
             nikInput.addEventListener('input', function() {
@@ -617,7 +528,6 @@ function setupTeamFormListeners(memberCount) {
             });
         }
         
-        // Birth date validation and age calculation
         const birthInput = document.querySelector(`input[name="memberBirthDate${i}"]`);
         if (birthInput) {
             birthInput.addEventListener('input', validateDateInput);
@@ -644,7 +554,6 @@ function setupTeamFormListeners(memberCount) {
             });
         }
         
-        // Add change listeners to all inputs for validation
         const allInputs = document.querySelectorAll(`#teamMember${i} input, #teamMember${i} select, #teamMember${i} textarea`);
         allInputs.forEach(input => {
             if (!input.type || input.type !== 'file') {
@@ -669,7 +578,6 @@ function handleFileUpload(input, labelId, fileKey) {
     
     const file = input.files[0];
     
-    // Validate file size
     if (file.size > 5 * 1024 * 1024) {
         Logger.error('File too large: ' + file.name);
         label.textContent = 'File terlalu besar (Max 5MB)';
@@ -689,11 +597,7 @@ function handleFileUpload(input, labelId, fileKey) {
 
 function validateDateInput(e) {
     let value = e.target.value;
-    
-    // Remove non-numeric characters except dash
     value = value.replace(/[^\d-]/g, '');
-    
-    // Parse the date parts
     const parts = value.split('-');
     
     if (parts[0] && parts[0].length > 4) {
@@ -835,13 +739,11 @@ function checkTeamCompletion() {
         reasons.push('Nama regu/tim belum diisi');
     }
     
-    // Check required members (1 and 2)
     for (let i = 1; i <= 2; i++) {
         const memberReasons = checkTeamMember(i, true);
         reasons.push(...memberReasons);
     }
     
-    // Check optional member 3 if it exists
     if (currentTeamMemberCount === 3) {
         const member3Filled = isTeamMemberFilled(3);
         if (member3Filled) {
@@ -908,7 +810,6 @@ function checkTeamMember(memberIndex, isRequired) {
     return reasons;
 }
 
-// Setup personal form listeners
 document.getElementById('nik').addEventListener('input', function() {
     this.value = this.value.replace(/[^0-9]/g, '').slice(0, 16);
     updateSubmitButtonState();
@@ -938,7 +839,6 @@ document.getElementById('tglLahir').addEventListener('change', function() {
     updateSubmitButtonState();
 });
 
-// Add listeners to all personal form inputs
 ['nik', 'nama', 'jenisKelamin', 'tempatLahir', 'alamat', 'noTelepon', 'email', 'namaRek', 'noRek', 'namaBank'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
@@ -947,8 +847,32 @@ document.getElementById('tglLahir').addEventListener('change', function() {
     }
 });
 
-function resetForm() {
-    if (!confirm('⚠️ Apakah Anda yakin ingin membersihkan semua isian form?\n\nSemua data yang sudah diisi akan hilang.')) {
+function showConfirmModal(title, message) {
+    return new Promise((resolve) => {
+        document.getElementById('confirmTitle').textContent = title;
+        document.getElementById('confirmMessage').textContent = message;
+        document.getElementById('confirmModal').classList.add('show');
+        
+        confirmCallback = resolve;
+    });
+}
+
+function closeConfirmModal(result) {
+    document.getElementById('confirmModal').classList.remove('show');
+    if (confirmCallback) {
+        confirmCallback(result);
+        confirmCallback = null;
+    }
+}
+
+async function resetForm() {
+    const confirmed = await showConfirmModal(
+        'Konfirmasi Bersihkan Form',
+        'Apakah Anda yakin ingin membersihkan semua isian form?\n\nSemua data yang sudah diisi akan hilang.'
+    );
+    
+    if (!confirmed) {
+        Logger.log('Form reset cancelled by user');
         return;
     }
     
@@ -965,6 +889,7 @@ function resetForm() {
     
     uploadedFiles = {};
     savedPersonalData = null;
+    savedTeamData = {};
     
     currentCabang = null;
     currentTeamMemberCount = 2;
@@ -1024,14 +949,13 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
     }
     
     Logger.log('=== FORM SUBMISSION STARTED ===');
-    showLoadingOverlay(true, 'Mengunggah dokumen...');
+    showLoadingOverlay(true, 'Memvalidasi data...');
     document.getElementById('progressContainer').style.display = 'block';
     updateProgress(5);
     
     try {
         const formData = new FormData();
         
-        // Add basic data
         formData.append('kecamatan', document.getElementById('kecamatan').value);
         formData.append('cabang', currentCabang.name);
         formData.append('maxAge', currentCabang.maxAge);
@@ -1041,11 +965,9 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
         Logger.log('Basic data added');
         updateProgress(10);
         
-        // Collect NIK and Names for duplicate check
         let nikList = [];
         let nameList = [];
         
-        // Add personal or team data
         if (!currentCabang.isTeam) {
             const nik = document.getElementById('nik').value;
             const nama = document.getElementById('nama').value;
@@ -1071,8 +993,8 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
                 const nik = document.querySelector(`[name="memberNik${i}"]`)?.value;
                 const nama = document.querySelector(`[name="memberName${i}"]`)?.value;
                 
-                if (nik) nikList.push(nik);
-                if (nama) nameList.push(nama);
+                if (nik && nik !== '-') nikList.push(nik);
+                if (nama && nama !== '-') nameList.push(nama);
                 
                 const fields = ['Nik', 'Name', 'JenisKelamin', 'TempatLahir', 'BirthDate', 'Umur', 'Alamat', 'NoTelepon', 'Email', 'NamaRek', 'NoRek', 'NamaBank'];
                 fields.forEach(field => {
@@ -1083,14 +1005,15 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
             Logger.log('Team data added for ' + currentTeamMemberCount + ' members');
         }
         
-        // Send NIK and Name lists for duplicate check
         formData.append('nikList', JSON.stringify(nikList));
         formData.append('nameList', JSON.stringify(nameList));
         
-        updateProgress(20);
+        Logger.log('NIK List for validation: ' + JSON.stringify(nikList));
+        Logger.log('Name List for validation: ' + JSON.stringify(nameList));
+        
+        updateProgress(15);
         showLoadingOverlay(true, 'Mengkonversi file...');
         
-        // Add files as base64
         let fileCount = 0;
         const totalFiles = Object.keys(uploadedFiles).length;
         
@@ -1104,7 +1027,7 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
                     formData.append(key + '_type', file.type);
                     fileCount++;
                     Logger.log(`File converted: ${key} (${fileCount}/${totalFiles})`);
-                    updateProgress(20 + (fileCount / totalFiles) * 40);
+                    updateProgress(15 + (fileCount / totalFiles) * 45);
                 } catch (fileError) {
                     Logger.error('Error converting file: ' + key, fileError);
                 }
@@ -1137,7 +1060,6 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
                 `Nama: ${displayName}\nCabang: ${currentCabang.name}\n\nData Anda telah tersimpan.\nEmail konfirmasi akan dikirim dalam 24 jam.`);
             Logger.log('=== FORM SUBMISSION SUCCESS ===');
             
-            // Auto clear form after success (no confirmation needed)
             setTimeout(() => {
                 Logger.log('Auto-clearing form after successful submission');
                 document.getElementById('registrationForm').reset();
@@ -1161,13 +1083,13 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
             }, 2000);
         } else {
             Logger.error('Submission failed:', result.message);
-            showResultModal(false, 'Error', result.message || 'Terjadi kesalahan saat menyimpan data');
+            showResultModal(false, 'Registrasi Ditolak', result.message || 'Terjadi kesalahan saat menyimpan data');
         }
         
     } catch (error) {
         Logger.error('Submit error:', error);
         showLoadingOverlay(false);
-        showResultModal(false, 'Error', 'Terjadi kesalahan: ' + error.message);
+        showResultModal(false, 'Kesalahan Sistem', 'Terjadi kesalahan saat mengirim data: ' + error.message + '\n\nSilakan coba lagi atau hubungi admin jika masalah berlanjut.');
     } finally {
         document.getElementById('progressContainer').style.display = 'none';
     }
