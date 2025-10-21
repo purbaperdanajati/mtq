@@ -70,33 +70,133 @@
                 <!-- BAGIAN 1: CABANG & KECAMATAN -->
                 <h3 style="color: #1e5c96; margin-bottom: 20px;">🏆 Pilih Cabang & Kecamatan</h3>
 
+                <!-- BAGIAN DROPDOWN CABANG - GANTI BAGIAN INI DI index.html ANDA -->
+
                 <div class="form-row">
                     <div class="form-group">
                         <label for="cabang">Cabang Lomba *</label>
                         <select id="cabang" name="cabang" required onchange="handleCabangChange()">
                             <option value="">-- Pilih Cabang Lomba --</option>
-                            <option value="Tartil Al Qur'an|12-11-29|personal">Tartil Al Qur'an (Perorangan - Max: 12 tahun 11 bulan 29 hari)</option>
-                            <option value="Tilawah Anak-anak|14-11-29|personal">Tilawah Anak-anak (Perorangan - Max: 14 tahun 11 bulan 29 hari)</option>
-                            <option value="Tilawah Remaja|24-11-29|personal">Tilawah Remaja (Perorangan - Max: 24 tahun 11 bulan 29 hari)</option>
-                            <option value="Tilawah Dewasa|40-11-29|personal">Tilawah Dewasa (Perorangan - Max: 40 tahun 11 bulan 29 hari)</option>
-                            <option value="Qira'at Mujawwad|40-11-29|personal">Qira'at Mujawwad (Perorangan - Max: 40 tahun 11 bulan 29 hari)</option>
-                            <option value="Hafalan 1 Juz|15-11-29|personal">Hafalan 1 Juz (Perorangan - Max: 15 tahun 11 bulan 29 hari)</option>
-                            <option value="Hafalan 5 Juz|20-11-29|personal">Hafalan 5 Juz (Perorangan - Max: 20 tahun 11 bulan 29 hari)</option>
-                            <option value="Hafalan 10 Juz|20-11-29|personal">Hafalan 10 Juz (Perorangan - Max: 20 tahun 11 bulan 29 hari)</option>
-                            <option value="Hafalan 20 Juz|22-11-29|personal">Hafalan 20 Juz (Perorangan - Max: 22 tahun 11 bulan 29 hari)</option>
-                            <option value="Hafalan 30 Juz|22-11-29|personal">Hafalan 30 Juz (Perorangan - Max: 22 tahun 11 bulan 29 hari)</option>
-                            <option value="Tafsir Arab|22-11-29|personal">Tafsir Arab (Perorangan - Max: 22 tahun 11 bulan 29 hari)</option>
-                            <option value="Tafsir Indonesia|34-11-29|personal">Tafsir Indonesia (Perorangan - Max: 34 tahun 11 bulan 29 hari)</option>
-                            <option value="Tafsir Inggris|34-11-29|personal">Tafsir Inggris (Perorangan - Max: 34 tahun 11 bulan 29 hari)</option>
-                            <option value="Kaligrafi Naskah|34-11-29|personal">Kaligrafi Naskah (Perorangan - Max: 34 tahun 11 bulan 29 hari)</option>
-                            <option value="Kaligrafi Hiasan|34-11-29|personal">Kaligrafi Hiasan (Perorangan - Max: 34 tahun 11 bulan 29 hari)</option>
-                            <option value="Kaligrafi Dekorasi|34-11-29|personal">Kaligrafi Dekorasi (Perorangan - Max: 34 tahun 11 bulan 29 hari)</option>
-                            <option value="Kaligrafi Kontemporer|34-11-29|personal">Kaligrafi Kontemporer (Perorangan - Max: 34 tahun 11 bulan 29 hari)</option>
-                            <option value="KTIQ|24-11-29|personal">KTIQ (Perorangan - Max: 24 tahun 11 bulan 29 hari)</option>
-                            <option value="Fahm Al Qur'an Putra|18-11-29|tim|3">Fahm Al Qur'an Putra (Tim - Max: 18 tahun 11 bulan 29 hari)</option>
-                            <option value="Fahm Al Qur'an Putri|18-11-29|tim|3">Fahm Al Qur'an Putri (Tim - Max: 18 tahun 11 bulan 29 hari)</option>
-                            <option value="Syarh Al Qur'an Putra|18-11-29|tim|3">Syarh Al Qur'an Putra (Tim - Max: 18 tahun 11 bulan 29 hari)</option>
-                            <option value="Syarh Al Qur'an Putri|18-11-29|tim|3">Syarh Al Qur'an Putri (Tim - Max: 18 tahun 11 bulan 29 hari)</option>
+                            
+                            <!-- TARTIL AL QUR'AN -->
+                            <optgroup label="Tartil Al Qur'an (Max: 12 tahun 11 bulan 29 hari)">
+                                <option value="Tartil Al Qur'an Putra|12-11-29|personal|male">Tartil Al Qur'an Putra</option>
+                                <option value="Tartil Al Qur'an Putri|12-11-29|personal|female">Tartil Al Qur'an Putri</option>
+                            </optgroup>
+                            
+                            <!-- TILAWAH ANAK-ANAK -->
+                            <optgroup label="Tilawah Anak-anak (Max: 14 tahun 11 bulan 29 hari)">
+                                <option value="Tilawah Anak-anak Putra|14-11-29|personal|male">Tilawah Anak-anak Putra</option>
+                                <option value="Tilawah Anak-anak Putri|14-11-29|personal|female">Tilawah Anak-anak Putri</option>
+                            </optgroup>
+                            
+                            <!-- TILAWAH REMAJA -->
+                            <optgroup label="Tilawah Remaja (Max: 24 tahun 11 bulan 29 hari)">
+                                <option value="Tilawah Remaja Putra|24-11-29|personal|male">Tilawah Remaja Putra</option>
+                                <option value="Tilawah Remaja Putri|24-11-29|personal|female">Tilawah Remaja Putri</option>
+                            </optgroup>
+                            
+                            <!-- TILAWAH DEWASA -->
+                            <optgroup label="Tilawah Dewasa (Max: 40 tahun 11 bulan 29 hari)">
+                                <option value="Tilawah Dewasa Putra|40-11-29|personal|male">Tilawah Dewasa Putra</option>
+                                <option value="Tilawah Dewasa Putri|40-11-29|personal|female">Tilawah Dewasa Putri</option>
+                            </optgroup>
+                            
+                            <!-- QIRA'AT MUJAWWAD -->
+                            <optgroup label="Qira'at Mujawwad (Max: 40 tahun 11 bulan 29 hari)">
+                                <option value="Qira'at Mujawwad Putra|40-11-29|personal|male">Qira'at Mujawwad Putra</option>
+                                <option value="Qira'at Mujawwad Putri|40-11-29|personal|female">Qira'at Mujawwad Putri</option>
+                            </optgroup>
+                            
+                            <!-- HAFALAN 1 JUZ -->
+                            <optgroup label="Hafalan 1 Juz (Max: 15 tahun 11 bulan 29 hari)">
+                                <option value="Hafalan 1 Juz Putra|15-11-29|personal|male">Hafalan 1 Juz Putra</option>
+                                <option value="Hafalan 1 Juz Putri|15-11-29|personal|female">Hafalan 1 Juz Putri</option>
+                            </optgroup>
+                            
+                            <!-- HAFALAN 5 JUZ -->
+                            <optgroup label="Hafalan 5 Juz (Max: 20 tahun 11 bulan 29 hari)">
+                                <option value="Hafalan 5 Juz Putra|20-11-29|personal|male">Hafalan 5 Juz Putra</option>
+                                <option value="Hafalan 5 Juz Putri|20-11-29|personal|female">Hafalan 5 Juz Putri</option>
+                            </optgroup>
+                            
+                            <!-- HAFALAN 10 JUZ -->
+                            <optgroup label="Hafalan 10 Juz (Max: 20 tahun 11 bulan 29 hari)">
+                                <option value="Hafalan 10 Juz Putra|20-11-29|personal|male">Hafalan 10 Juz Putra</option>
+                                <option value="Hafalan 10 Juz Putri|20-11-29|personal|female">Hafalan 10 Juz Putri</option>
+                            </optgroup>
+                            
+                            <!-- HAFALAN 20 JUZ -->
+                            <optgroup label="Hafalan 20 Juz (Max: 22 tahun 11 bulan 29 hari)">
+                                <option value="Hafalan 20 Juz Putra|22-11-29|personal|male">Hafalan 20 Juz Putra</option>
+                                <option value="Hafalan 20 Juz Putri|22-11-29|personal|female">Hafalan 20 Juz Putri</option>
+                            </optgroup>
+                            
+                            <!-- HAFALAN 30 JUZ -->
+                            <optgroup label="Hafalan 30 Juz (Max: 22 tahun 11 bulan 29 hari)">
+                                <option value="Hafalan 30 Juz Putra|22-11-29|personal|male">Hafalan 30 Juz Putra</option>
+                                <option value="Hafalan 30 Juz Putri|22-11-29|personal|female">Hafalan 30 Juz Putri</option>
+                            </optgroup>
+                            
+                            <!-- TAFSIR ARAB -->
+                            <optgroup label="Tafsir Arab (Max: 22 tahun 11 bulan 29 hari)">
+                                <option value="Tafsir Arab Putra|22-11-29|personal|male">Tafsir Arab Putra</option>
+                                <option value="Tafsir Arab Putri|22-11-29|personal|female">Tafsir Arab Putri</option>
+                            </optgroup>
+                            
+                            <!-- TAFSIR INDONESIA -->
+                            <optgroup label="Tafsir Indonesia (Max: 34 tahun 11 bulan 29 hari)">
+                                <option value="Tafsir Indonesia Putra|34-11-29|personal|male">Tafsir Indonesia Putra</option>
+                                <option value="Tafsir Indonesia Putri|34-11-29|personal|female">Tafsir Indonesia Putri</option>
+                            </optgroup>
+                            
+                            <!-- TAFSIR INGGRIS -->
+                            <optgroup label="Tafsir Inggris (Max: 34 tahun 11 bulan 29 hari)">
+                                <option value="Tafsir Inggris Putra|34-11-29|personal|male">Tafsir Inggris Putra</option>
+                                <option value="Tafsir Inggris Putri|34-11-29|personal|female">Tafsir Inggris Putri</option>
+                            </optgroup>
+                            
+                            <!-- KALIGRAFI NASKAH -->
+                            <optgroup label="Kaligrafi Naskah (Max: 34 tahun 11 bulan 29 hari)">
+                                <option value="Kaligrafi Naskah Putra|34-11-29|personal|male">Kaligrafi Naskah Putra</option>
+                                <option value="Kaligrafi Naskah Putri|34-11-29|personal|female">Kaligrafi Naskah Putri</option>
+                            </optgroup>
+                            
+                            <!-- KALIGRAFI HIASAN -->
+                            <optgroup label="Kaligrafi Hiasan (Max: 34 tahun 11 bulan 29 hari)">
+                                <option value="Kaligrafi Hiasan Putra|34-11-29|personal|male">Kaligrafi Hiasan Putra</option>
+                                <option value="Kaligrafi Hiasan Putri|34-11-29|personal|female">Kaligrafi Hiasan Putri</option>
+                            </optgroup>
+                            
+                            <!-- KALIGRAFI DEKORASI -->
+                            <optgroup label="Kaligrafi Dekorasi (Max: 34 tahun 11 bulan 29 hari)">
+                                <option value="Kaligrafi Dekorasi Putra|34-11-29|personal|male">Kaligrafi Dekorasi Putra</option>
+                                <option value="Kaligrafi Dekorasi Putri|34-11-29|personal|female">Kaligrafi Dekorasi Putri</option>
+                            </optgroup>
+                            
+                            <!-- KALIGRAFI KONTEMPORER -->
+                            <optgroup label="Kaligrafi Kontemporer (Max: 34 tahun 11 bulan 29 hari)">
+                                <option value="Kaligrafi Kontemporer Putra|34-11-29|personal|male">Kaligrafi Kontemporer Putra</option>
+                                <option value="Kaligrafi Kontemporer Putri|34-11-29|personal|female">Kaligrafi Kontemporer Putri</option>
+                            </optgroup>
+                            
+                            <!-- KTIQ -->
+                            <optgroup label="KTIQ (Max: 24 tahun 11 bulan 29 hari)">
+                                <option value="KTIQ Putra|24-11-29|personal|male">KTIQ Putra</option>
+                                <option value="KTIQ Putri|24-11-29|personal|female">KTIQ Putri</option>
+                            </optgroup>
+                            
+                            <!-- TIM: FAHM AL QUR'AN -->
+                            <optgroup label="Fahm Al Qur'an (Tim - Max: 18 tahun 11 bulan 29 hari)">
+                                <option value="Fahm Al Qur'an Putra|18-11-29|tim|3|male">Fahm Al Qur'an Putra (Tim)</option>
+                                <option value="Fahm Al Qur'an Putri|18-11-29|tim|3|female">Fahm Al Qur'an Putri (Tim)</option>
+                            </optgroup>
+                            
+                            <!-- TIM: SYARH AL QUR'AN -->
+                            <optgroup label="Syarh Al Qur'an (Tim - Max: 18 tahun 11 bulan 29 hari)">
+                                <option value="Syarh Al Qur'an Putra|18-11-29|tim|3|male">Syarh Al Qur'an Putra (Tim)</option>
+                                <option value="Syarh Al Qur'an Putri|18-11-29|tim|3|female">Syarh Al Qur'an Putri (Tim)</option>
+                            </optgroup>
                         </select>
                         <div id="ageRequirement" class="age-info" style="display: none;"></div>
                     </div>

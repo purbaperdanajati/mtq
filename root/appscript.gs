@@ -32,12 +32,11 @@ function doPost(e) {
       addHeaders(sheet);
     }
     
-    // Check for duplicates - LANGKAH PERTAMA SEBELUM UPLOAD FILE
-    Logger.log('Checking for duplicate NIK/Name across ALL cabang');
+    // Check for duplicates - HANYA VALIDASI NIK, TIDAK VALIDASI NAMA
+    Logger.log('Checking for duplicate NIK across ALL cabang');
     const nikList = formData.nikList ? JSON.parse(formData.nikList) : [];
-    const nameList = formData.nameList ? JSON.parse(formData.nameList) : [];
     
-    const duplicateCheck = checkDuplicates(sheet, nikList, nameList);
+    const duplicateCheck = checkDuplicates(sheet, nikList);
     if (!duplicateCheck.isValid) {
       Logger.log('Duplicate found: ' + duplicateCheck.message);
       return createResponse(false, duplicateCheck.message);
@@ -66,12 +65,11 @@ function doPost(e) {
   }
 }
 
-// ===== CHECK DUPLICATES - UPDATED untuk cek di SEMUA CABANG =====
-function checkDuplicates(sheet, nikList, nameList) {
+// ===== CHECK DUPLICATES - HANYA NIK, TIDAK NAMA =====
+function checkDuplicates(sheet, nikList) {
   try {
     const lastRow = sheet.getLastRow();
     if (lastRow <= 1) {
-      // No data yet, no duplicates possible
       Logger.log('No existing data, duplicate check passed');
       return { isValid: true };
     }
@@ -85,13 +83,9 @@ function checkDuplicates(sheet, nikList, nameList) {
     // Column indices (0-based after getting values)
     const cabangCol = 3; // Cabang Lomba column
     const nikCol = 6; // NIK column
-    const namaCol = 7; // Nama Lengkap column
     const member1NikCol = 18; // Anggota Tim #1 - NIK
-    const member1NamaCol = 19; // Anggota Tim #1 - Nama
     const member2NikCol = 30; // Anggota Tim #2 - NIK
-    const member2NamaCol = 31; // Anggota Tim #2 - Nama
     const member3NikCol = 42; // Anggota Tim #3 - NIK
-    const member3NamaCol = 43; // Anggota Tim #3 - Nama
     
     // Iterate through all existing registrations
     for (let i = 0; i < data.length; i++) {
@@ -99,7 +93,7 @@ function checkDuplicates(sheet, nikList, nameList) {
       const rowCabang = row[cabangCol];
       const rowNum = i + 2; // Actual row number in sheet
       
-      // Collect all NIKs and names from this existing registration
+      // Collect all NIKs from this existing registration
       const existingNiks = [
         row[nikCol],
         row[member1NikCol],
@@ -107,16 +101,9 @@ function checkDuplicates(sheet, nikList, nameList) {
         row[member3NikCol]
       ].filter(nik => nik && nik !== '-' && nik.toString().trim() !== '');
       
-      const existingNames = [
-        row[namaCol],
-        row[member1NamaCol],
-        row[member2NamaCol],
-        row[member3NamaCol]
-      ].filter(name => name && name !== '-' && name.toString().trim() !== '');
+      Logger.log('Row ' + rowNum + ' (' + rowCabang + '): Found ' + existingNiks.length + ' NIKs');
       
-      Logger.log('Row ' + rowNum + ' (' + rowCabang + '): Found ' + existingNiks.length + ' NIKs and ' + existingNames.length + ' names');
-      
-      // Check for NIK duplicates
+      // Check for NIK duplicates ONLY
       for (let newNik of nikList) {
         if (newNik && newNik.trim() !== '') {
           const trimmedNewNik = newNik.trim();
@@ -135,26 +122,6 @@ function checkDuplicates(sheet, nikList, nameList) {
           }
         }
       }
-      
-      // Check for Name duplicates (case-insensitive)
-      for (let newName of nameList) {
-        if (newName && newName.trim() !== '') {
-          const trimmedNewName = newName.trim().toLowerCase();
-          
-          for (let existingName of existingNames) {
-            const trimmedExistingName = existingName.toString().trim().toLowerCase();
-            
-            if (trimmedExistingName === trimmedNewName) {
-              const message = `Nama "${newName}" sudah terdaftar di cabang "${rowCabang}". Setiap peserta hanya boleh mendaftar satu kali di seluruh cabang lomba.`;
-              Logger.log('DUPLICATE NAME FOUND: ' + message);
-              return {
-                isValid: false,
-                message: message
-              };
-            }
-          }
-        }
-      }
     }
     
     Logger.log('No duplicates found - validation passed');
@@ -163,7 +130,6 @@ function checkDuplicates(sheet, nikList, nameList) {
   } catch (error) {
     Logger.log('Error in checkDuplicates: ' + error.message);
     Logger.log('Error stack: ' + error.stack);
-    // If error in duplicate check, REJECT registration for safety
     return { 
       isValid: false, 
       message: 'Terjadi kesalahan saat validasi data. Silakan coba lagi atau hubungi admin.' 

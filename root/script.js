@@ -1,4 +1,4 @@
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyzXwstIz5DjqSDjhUVBVJUGaKo7H5ZpiBjAsa263CvjxYVc9DAskn1oC1AryTPRnFu/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyvlsXl1tqhHZDcUkuCEDcL3K9rqkcOFdLG6vhNLffMORVUsYbQCGPN-F4ZvPbcO2VX/exec';
 
 // Logger utility
 const Logger = {
@@ -15,28 +15,66 @@ const Logger = {
 };
 
 const cabangData = {
-    'Tartil Al Qur\'an|12-11-29|personal': { name: 'Tartil Al Qur\'an', maxAge: '12-11-29', isTeam: false },
-    'Tilawah Anak-anak|14-11-29|personal': { name: 'Tilawah Anak-anak', maxAge: '14-11-29', isTeam: false },
-    'Tilawah Remaja|24-11-29|personal': { name: 'Tilawah Remaja', maxAge: '24-11-29', isTeam: false },
-    'Tilawah Dewasa|40-11-29|personal': { name: 'Tilawah Dewasa', maxAge: '40-11-29', isTeam: false },
-    'Qira\'at Mujawwad|40-11-29|personal': { name: 'Qira\'at Mujawwad', maxAge: '40-11-29', isTeam: false },
-    'Hafalan 1 Juz|15-11-29|personal': { name: 'Hafalan 1 Juz', maxAge: '15-11-29', isTeam: false },
-    'Hafalan 5 Juz|20-11-29|personal': { name: 'Hafalan 5 Juz', maxAge: '20-11-29', isTeam: false },
-    'Hafalan 10 Juz|20-11-29|personal': { name: 'Hafalan 10 Juz', maxAge: '20-11-29', isTeam: false },
-    'Hafalan 20 Juz|22-11-29|personal': { name: 'Hafalan 20 Juz', maxAge: '22-11-29', isTeam: false },
-    'Hafalan 30 Juz|22-11-29|personal': { name: 'Hafalan 30 Juz', maxAge: '22-11-29', isTeam: false },
-    'Tafsir Arab|22-11-29|personal': { name: 'Tafsir Arab', maxAge: '22-11-29', isTeam: false },
-    'Tafsir Indonesia|34-11-29|personal': { name: 'Tafsir Indonesia', maxAge: '34-11-29', isTeam: false },
-    'Tafsir Inggris|34-11-29|personal': { name: 'Tafsir Inggris', maxAge: '34-11-29', isTeam: false },
-    'Kaligrafi Naskah|34-11-29|personal': { name: 'Kaligrafi Naskah', maxAge: '34-11-29', isTeam: false },
-    'Kaligrafi Hiasan|34-11-29|personal': { name: 'Kaligrafi Hiasan', maxAge: '34-11-29', isTeam: false },
-    'Kaligrafi Dekorasi|34-11-29|personal': { name: 'Kaligrafi Dekorasi', maxAge: '34-11-29', isTeam: false },
-    'Kaligrafi Kontemporer|34-11-29|personal': { name: 'Kaligrafi Kontemporer', maxAge: '34-11-29', isTeam: false },
-    'KTIQ|24-11-29|personal': { name: 'KTIQ', maxAge: '24-11-29', isTeam: false },
-    'Fahm Al Qur\'an Putra|18-11-29|tim|3': { name: 'Fahm Al Qur\'an Putra', maxAge: '18-11-29', isTeam: true, memberCount: 3 },
-    'Fahm Al Qur\'an Putri|18-11-29|tim|3': { name: 'Fahm Al Qur\'an Putri', maxAge: '18-11-29', isTeam: true, memberCount: 3 },
-    'Syarh Al Qur\'an Putra|18-11-29|tim|3': { name: 'Syarh Al Qur\'an Putra', maxAge: '18-11-29', isTeam: true, memberCount: 3 },
-    'Syarh Al Qur\'an Putri|18-11-29|tim|3': { name: 'Syarh Al Qur\'an Putri', maxAge: '18-11-29', isTeam: true, memberCount: 3 }
+    // Tartil Al Qur'an
+    'Tartil Al Qur\'an Putra|12-11-29|personal|male': { name: 'Tartil Al Qur\'an Putra', maxAge: '12-11-29', isTeam: false, genderRestriction: 'male' },
+    'Tartil Al Qur\'an Putri|12-11-29|personal|female': { name: 'Tartil Al Qur\'an Putri', maxAge: '12-11-29', isTeam: false, genderRestriction: 'female' },
+    // Tilawah Anak-anak
+    'Tilawah Anak-anak Putra|14-11-29|personal|male': { name: 'Tilawah Anak-anak Putra', maxAge: '14-11-29', isTeam: false, genderRestriction: 'male' },
+    'Tilawah Anak-anak Putri|14-11-29|personal|female': { name: 'Tilawah Anak-anak Putri', maxAge: '14-11-29', isTeam: false, genderRestriction: 'female' },
+    // Tilawah Remaja
+    'Tilawah Remaja Putra|24-11-29|personal|male': { name: 'Tilawah Remaja Putra', maxAge: '24-11-29', isTeam: false, genderRestriction: 'male' },
+    'Tilawah Remaja Putri|24-11-29|personal|female': { name: 'Tilawah Remaja Putri', maxAge: '24-11-29', isTeam: false, genderRestriction: 'female' },
+    // Tilawah Dewasa
+    'Tilawah Dewasa Putra|40-11-29|personal|male': { name: 'Tilawah Dewasa Putra', maxAge: '40-11-29', isTeam: false, genderRestriction: 'male' },
+    'Tilawah Dewasa Putri|40-11-29|personal|female': { name: 'Tilawah Dewasa Putri', maxAge: '40-11-29', isTeam: false, genderRestriction: 'female' },
+    // Qira'at Mujawwad
+    'Qira\'at Mujawwad Putra|40-11-29|personal|male': { name: 'Qira\'at Mujawwad Putra', maxAge: '40-11-29', isTeam: false, genderRestriction: 'male' },
+    'Qira\'at Mujawwad Putri|40-11-29|personal|female': { name: 'Qira\'at Mujawwad Putri', maxAge: '40-11-29', isTeam: false, genderRestriction: 'female' },
+    // Hafalan 1 Juz
+    'Hafalan 1 Juz Putra|15-11-29|personal|male': { name: 'Hafalan 1 Juz Putra', maxAge: '15-11-29', isTeam: false, genderRestriction: 'male' },
+    'Hafalan 1 Juz Putri|15-11-29|personal|female': { name: 'Hafalan 1 Juz Putri', maxAge: '15-11-29', isTeam: false, genderRestriction: 'female' },
+    // Hafalan 5 Juz
+    'Hafalan 5 Juz Putra|20-11-29|personal|male': { name: 'Hafalan 5 Juz Putra', maxAge: '20-11-29', isTeam: false, genderRestriction: 'male' },
+    'Hafalan 5 Juz Putri|20-11-29|personal|female': { name: 'Hafalan 5 Juz Putri', maxAge: '20-11-29', isTeam: false, genderRestriction: 'female' },
+    // Hafalan 10 Juz
+    'Hafalan 10 Juz Putra|20-11-29|personal|male': { name: 'Hafalan 10 Juz Putra', maxAge: '20-11-29', isTeam: false, genderRestriction: 'male' },
+    'Hafalan 10 Juz Putri|20-11-29|personal|female': { name: 'Hafalan 10 Juz Putri', maxAge: '20-11-29', isTeam: false, genderRestriction: 'female' },
+    // Hafalan 20 Juz
+    'Hafalan 20 Juz Putra|22-11-29|personal|male': { name: 'Hafalan 20 Juz Putra', maxAge: '22-11-29', isTeam: false, genderRestriction: 'male' },
+    'Hafalan 20 Juz Putri|22-11-29|personal|female': { name: 'Hafalan 20 Juz Putri', maxAge: '22-11-29', isTeam: false, genderRestriction: 'female' },
+    // Hafalan 30 Juz
+    'Hafalan 30 Juz Putra|22-11-29|personal|male': { name: 'Hafalan 30 Juz Putra', maxAge: '22-11-29', isTeam: false, genderRestriction: 'male' },
+    'Hafalan 30 Juz Putri|22-11-29|personal|female': { name: 'Hafalan 30 Juz Putri', maxAge: '22-11-29', isTeam: false, genderRestriction: 'female' },
+    // Tafsir Arab
+    'Tafsir Arab Putra|22-11-29|personal|male': { name: 'Tafsir Arab Putra', maxAge: '22-11-29', isTeam: false, genderRestriction: 'male' },
+    'Tafsir Arab Putri|22-11-29|personal|female': { name: 'Tafsir Arab Putri', maxAge: '22-11-29', isTeam: false, genderRestriction: 'female' },
+    // Tafsir Indonesia
+    'Tafsir Indonesia Putra|34-11-29|personal|male': { name: 'Tafsir Indonesia Putra', maxAge: '34-11-29', isTeam: false, genderRestriction: 'male' },
+    'Tafsir Indonesia Putri|34-11-29|personal|female': { name: 'Tafsir Indonesia Putri', maxAge: '34-11-29', isTeam: false, genderRestriction: 'female' },
+    // Tafsir Inggris
+    'Tafsir Inggris Putra|34-11-29|personal|male': { name: 'Tafsir Inggris Putra', maxAge: '34-11-29', isTeam: false, genderRestriction: 'male' },
+    'Tafsir Inggris Putri|34-11-29|personal|female': { name: 'Tafsir Inggris Putri', maxAge: '34-11-29', isTeam: false, genderRestriction: 'female' },
+    // Kaligrafi Naskah
+    'Kaligrafi Naskah Putra|34-11-29|personal|male': { name: 'Kaligrafi Naskah Putra', maxAge: '34-11-29', isTeam: false, genderRestriction: 'male' },
+    'Kaligrafi Naskah Putri|34-11-29|personal|female': { name: 'Kaligrafi Naskah Putri', maxAge: '34-11-29', isTeam: false, genderRestriction: 'female' },
+    // Kaligrafi Hiasan
+    'Kaligrafi Hiasan Putra|34-11-29|personal|male': { name: 'Kaligrafi Hiasan Putra', maxAge: '34-11-29', isTeam: false, genderRestriction: 'male' },
+    'Kaligrafi Hiasan Putri|34-11-29|personal|female': { name: 'Kaligrafi Hiasan Putri', maxAge: '34-11-29', isTeam: false, genderRestriction: 'female' },
+    // Kaligrafi Dekorasi
+    'Kaligrafi Dekorasi Putra|34-11-29|personal|male': { name: 'Kaligrafi Dekorasi Putra', maxAge: '34-11-29', isTeam: false, genderRestriction: 'male' },
+    'Kaligrafi Dekorasi Putri|34-11-29|personal|female': { name: 'Kaligrafi Dekorasi Putri', maxAge: '34-11-29', isTeam: false, genderRestriction: 'female' },
+    // Kaligrafi Kontemporer
+    'Kaligrafi Kontemporer Putra|34-11-29|personal|male': { name: 'Kaligrafi Kontemporer Putra', maxAge: '34-11-29', isTeam: false, genderRestriction: 'male' },
+    'Kaligrafi Kontemporer Putri|34-11-29|personal|female': { name: 'Kaligrafi Kontemporer Putri', maxAge: '34-11-29', isTeam: false, genderRestriction: 'female' },
+    // KTIQ
+    'KTIQ Putra|24-11-29|personal|male': { name: 'KTIQ Putra', maxAge: '24-11-29', isTeam: false, genderRestriction: 'male' },
+    'KTIQ Putri|24-11-29|personal|female': { name: 'KTIQ Putri', maxAge: '24-11-29', isTeam: false, genderRestriction: 'female' },
+    // Tim: Fahm Al Qur'an
+    'Fahm Al Qur\'an Putra|18-11-29|tim|3|male': { name: 'Fahm Al Qur\'an Putra', maxAge: '18-11-29', isTeam: true, memberCount: 3, genderRestriction: 'male' },
+    'Fahm Al Qur\'an Putri|18-11-29|tim|3|female': { name: 'Fahm Al Qur\'an Putri', maxAge: '18-11-29', isTeam: true, memberCount: 3, genderRestriction: 'female' },
+    // Tim: Syarh Al Qur'an
+    'Syarh Al Qur\'an Putra|18-11-29|tim|3|male': { name: 'Syarh Al Qur\'an Putra', maxAge: '18-11-29', isTeam: true, memberCount: 3, genderRestriction: 'male' },
+    'Syarh Al Qur\'an Putri|18-11-29|tim|3|female': { name: 'Syarh Al Qur\'an Putri', maxAge: '18-11-29', isTeam: true, memberCount: 3, genderRestriction: 'female' }
 };
 
 let currentCabang = null;
@@ -240,7 +278,14 @@ function handleCabangChange() {
     
     currentCabang = data;
     const ageText = data.maxAge.split('-').join(' tahun ') + ' hari';
-    document.getElementById('ageRequirement').innerHTML = `ℹ️ Batas usia maksimal: ${ageText} (per 1 November 2025)`;
+    let ageRequirementText = `ℹ️ Batas usia maksimal: ${ageText} (per 1 November 2025)`;
+    
+    if (data.genderRestriction && data.genderRestriction !== 'any') {
+        const genderText = data.genderRestriction === 'male' ? 'Laki-laki' : 'Perempuan';
+        ageRequirementText += `<br>👥 Khusus peserta: ${genderText}`;
+    }
+    
+    document.getElementById('ageRequirement').innerHTML = ageRequirementText;
     document.getElementById('ageRequirement').style.display = 'block';
     
     if (data.isTeam) {
@@ -319,7 +364,7 @@ function generatePersonalDocsForm() {
         div.innerHTML = `
             <label>${doc.id}. ${doc.name} *</label>
             <small class="small-text">${doc.desc}</small>
-            <label for="personalDoc${doc.id}" class="file-input-label">📎 Pilih File</label>
+            <label for="personalDoc${doc.id}" class="file-input-label">📁 Pilih File</label>
             <input type="file" id="personalDoc${doc.id}" accept=".pdf,.jpg,.jpeg,.png">
             <span class="file-name" id="personalDoc${doc.id}Name">Belum ada file</span>
         `;
@@ -379,7 +424,7 @@ function generateTeamMemberHTML(i) {
             <div class="form-row">
                 <div class="form-group">
                     <label>Jenis Kelamin ${isOptional ? '' : '*'}</label>
-                    <select name="memberJenisKelamin${i}" ${isOptional ? '' : 'required'}>
+                    <select name="memberJenisKelamin${i}" class="gender-select" data-member="${i}" ${isOptional ? '' : 'required'}>
                         <option value="">-- Pilih --</option>
                         <option value="Laki-laki">Laki-laki</option>
                         <option value="Perempuan">Perempuan</option>
@@ -439,35 +484,35 @@ function generateTeamMemberHTML(i) {
                 <div class="doc-group">
                     <label>1. Surat Mandat ${isOptional ? '' : '*'}</label>
                     <small class="small-text">Ketua LPTQ Kecamatan</small>
-                    <label for="teamDoc${i}_1" class="file-input-label">📎 Pilih</label>
+                    <label for="teamDoc${i}_1" class="file-input-label">📁 Pilih</label>
                     <input type="file" id="teamDoc${i}_1" accept=".pdf,.jpg,.jpeg,.png">
                     <span class="file-name" id="teamDoc${i}_1Name">Belum ada</span>
                 </div>
                 <div class="doc-group">
                     <label>2. KTP/KK/KIA ${isOptional ? '' : '*'}</label>
                     <small class="small-text">6 bulan sebelum 1 Nov 2025</small>
-                    <label for="teamDoc${i}_2" class="file-input-label">📎 Pilih</label>
+                    <label for="teamDoc${i}_2" class="file-input-label">📁 Pilih</label>
                     <input type="file" id="teamDoc${i}_2" accept=".pdf,.jpg,.jpeg,.png">
                     <span class="file-name" id="teamDoc${i}_2Name">Belum ada</span>
                 </div>
                 <div class="doc-group">
                     <label>3. Sertifikat Kejuaraan ${isOptional ? '' : '*'}</label>
                     <small class="small-text">MTQ Tingkat Kecamatan</small>
-                    <label for="teamDoc${i}_3" class="file-input-label">📎 Pilih</label>
+                    <label for="teamDoc${i}_3" class="file-input-label">📁 Pilih</label>
                     <input type="file" id="teamDoc${i}_3" accept=".pdf,.jpg,.jpeg,.png">
                     <span class="file-name" id="teamDoc${i}_3Name">Belum ada</span>
                 </div>
                 <div class="doc-group">
                     <label>4. Foto Buku Tabungan ${isOptional ? '' : '*'}</label>
                     <small class="small-text">Nomor rekening</small>
-                    <label for="teamDoc${i}_4" class="file-input-label">📎 Pilih</label>
+                    <label for="teamDoc${i}_4" class="file-input-label">📁 Pilih</label>
                     <input type="file" id="teamDoc${i}_4" accept=".pdf,.jpg,.jpeg,.png">
                     <span class="file-name" id="teamDoc${i}_4Name">Belum ada</span>
                 </div>
                 <div class="doc-group">
                     <label>5. Pas Photo ${isOptional ? '' : '*'}</label>
                     <small class="small-text">Latar belakang biru</small>
-                    <label for="teamDoc${i}_5" class="file-input-label">📎 Pilih</label>
+                    <label for="teamDoc${i}_5" class="file-input-label">📁 Pilih</label>
                     <input type="file" id="teamDoc${i}_5" accept=".jpg,.jpeg,.png">
                     <span class="file-name" id="teamDoc${i}_5Name">Belum ada</span>
                 </div>
