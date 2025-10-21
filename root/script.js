@@ -15,64 +15,44 @@ const Logger = {
 };
 
 const cabangData = {
-    // Tartil Al Qur'an
     'Tartil Al Qur\'an Putra|12-11-29|personal|male': { name: 'Tartil Al Qur\'an Putra', maxAge: '12-11-29', isTeam: false, genderRestriction: 'male' },
     'Tartil Al Qur\'an Putri|12-11-29|personal|female': { name: 'Tartil Al Qur\'an Putri', maxAge: '12-11-29', isTeam: false, genderRestriction: 'female' },
-    // Tilawah Anak-anak
     'Tilawah Anak-anak Putra|14-11-29|personal|male': { name: 'Tilawah Anak-anak Putra', maxAge: '14-11-29', isTeam: false, genderRestriction: 'male' },
     'Tilawah Anak-anak Putri|14-11-29|personal|female': { name: 'Tilawah Anak-anak Putri', maxAge: '14-11-29', isTeam: false, genderRestriction: 'female' },
-    // Tilawah Remaja
     'Tilawah Remaja Putra|24-11-29|personal|male': { name: 'Tilawah Remaja Putra', maxAge: '24-11-29', isTeam: false, genderRestriction: 'male' },
     'Tilawah Remaja Putri|24-11-29|personal|female': { name: 'Tilawah Remaja Putri', maxAge: '24-11-29', isTeam: false, genderRestriction: 'female' },
-    // Tilawah Dewasa
     'Tilawah Dewasa Putra|40-11-29|personal|male': { name: 'Tilawah Dewasa Putra', maxAge: '40-11-29', isTeam: false, genderRestriction: 'male' },
     'Tilawah Dewasa Putri|40-11-29|personal|female': { name: 'Tilawah Dewasa Putri', maxAge: '40-11-29', isTeam: false, genderRestriction: 'female' },
-    // Qira'at Mujawwad
     'Qira\'at Mujawwad Putra|40-11-29|personal|male': { name: 'Qira\'at Mujawwad Putra', maxAge: '40-11-29', isTeam: false, genderRestriction: 'male' },
     'Qira\'at Mujawwad Putri|40-11-29|personal|female': { name: 'Qira\'at Mujawwad Putri', maxAge: '40-11-29', isTeam: false, genderRestriction: 'female' },
-    // Hafalan 1 Juz
     'Hafalan 1 Juz Putra|15-11-29|personal|male': { name: 'Hafalan 1 Juz Putra', maxAge: '15-11-29', isTeam: false, genderRestriction: 'male' },
     'Hafalan 1 Juz Putri|15-11-29|personal|female': { name: 'Hafalan 1 Juz Putri', maxAge: '15-11-29', isTeam: false, genderRestriction: 'female' },
-    // Hafalan 5 Juz
     'Hafalan 5 Juz Putra|20-11-29|personal|male': { name: 'Hafalan 5 Juz Putra', maxAge: '20-11-29', isTeam: false, genderRestriction: 'male' },
     'Hafalan 5 Juz Putri|20-11-29|personal|female': { name: 'Hafalan 5 Juz Putri', maxAge: '20-11-29', isTeam: false, genderRestriction: 'female' },
-    // Hafalan 10 Juz
     'Hafalan 10 Juz Putra|20-11-29|personal|male': { name: 'Hafalan 10 Juz Putra', maxAge: '20-11-29', isTeam: false, genderRestriction: 'male' },
     'Hafalan 10 Juz Putri|20-11-29|personal|female': { name: 'Hafalan 10 Juz Putri', maxAge: '20-11-29', isTeam: false, genderRestriction: 'female' },
-    // Hafalan 20 Juz
     'Hafalan 20 Juz Putra|22-11-29|personal|male': { name: 'Hafalan 20 Juz Putra', maxAge: '22-11-29', isTeam: false, genderRestriction: 'male' },
     'Hafalan 20 Juz Putri|22-11-29|personal|female': { name: 'Hafalan 20 Juz Putri', maxAge: '22-11-29', isTeam: false, genderRestriction: 'female' },
-    // Hafalan 30 Juz
     'Hafalan 30 Juz Putra|22-11-29|personal|male': { name: 'Hafalan 30 Juz Putra', maxAge: '22-11-29', isTeam: false, genderRestriction: 'male' },
     'Hafalan 30 Juz Putri|22-11-29|personal|female': { name: 'Hafalan 30 Juz Putri', maxAge: '22-11-29', isTeam: false, genderRestriction: 'female' },
-    // Tafsir Arab
     'Tafsir Arab Putra|22-11-29|personal|male': { name: 'Tafsir Arab Putra', maxAge: '22-11-29', isTeam: false, genderRestriction: 'male' },
     'Tafsir Arab Putri|22-11-29|personal|female': { name: 'Tafsir Arab Putri', maxAge: '22-11-29', isTeam: false, genderRestriction: 'female' },
-    // Tafsir Indonesia
     'Tafsir Indonesia Putra|34-11-29|personal|male': { name: 'Tafsir Indonesia Putra', maxAge: '34-11-29', isTeam: false, genderRestriction: 'male' },
     'Tafsir Indonesia Putri|34-11-29|personal|female': { name: 'Tafsir Indonesia Putri', maxAge: '34-11-29', isTeam: false, genderRestriction: 'female' },
-    // Tafsir Inggris
     'Tafsir Inggris Putra|34-11-29|personal|male': { name: 'Tafsir Inggris Putra', maxAge: '34-11-29', isTeam: false, genderRestriction: 'male' },
     'Tafsir Inggris Putri|34-11-29|personal|female': { name: 'Tafsir Inggris Putri', maxAge: '34-11-29', isTeam: false, genderRestriction: 'female' },
-    // Kaligrafi Naskah
     'Kaligrafi Naskah Putra|34-11-29|personal|male': { name: 'Kaligrafi Naskah Putra', maxAge: '34-11-29', isTeam: false, genderRestriction: 'male' },
     'Kaligrafi Naskah Putri|34-11-29|personal|female': { name: 'Kaligrafi Naskah Putri', maxAge: '34-11-29', isTeam: false, genderRestriction: 'female' },
-    // Kaligrafi Hiasan
     'Kaligrafi Hiasan Putra|34-11-29|personal|male': { name: 'Kaligrafi Hiasan Putra', maxAge: '34-11-29', isTeam: false, genderRestriction: 'male' },
     'Kaligrafi Hiasan Putri|34-11-29|personal|female': { name: 'Kaligrafi Hiasan Putri', maxAge: '34-11-29', isTeam: false, genderRestriction: 'female' },
-    // Kaligrafi Dekorasi
     'Kaligrafi Dekorasi Putra|34-11-29|personal|male': { name: 'Kaligrafi Dekorasi Putra', maxAge: '34-11-29', isTeam: false, genderRestriction: 'male' },
     'Kaligrafi Dekorasi Putri|34-11-29|personal|female': { name: 'Kaligrafi Dekorasi Putri', maxAge: '34-11-29', isTeam: false, genderRestriction: 'female' },
-    // Kaligrafi Kontemporer
     'Kaligrafi Kontemporer Putra|34-11-29|personal|male': { name: 'Kaligrafi Kontemporer Putra', maxAge: '34-11-29', isTeam: false, genderRestriction: 'male' },
     'Kaligrafi Kontemporer Putri|34-11-29|personal|female': { name: 'Kaligrafi Kontemporer Putri', maxAge: '34-11-29', isTeam: false, genderRestriction: 'female' },
-    // KTIQ
     'KTIQ Putra|24-11-29|personal|male': { name: 'KTIQ Putra', maxAge: '24-11-29', isTeam: false, genderRestriction: 'male' },
     'KTIQ Putri|24-11-29|personal|female': { name: 'KTIQ Putri', maxAge: '24-11-29', isTeam: false, genderRestriction: 'female' },
-    // Tim: Fahm Al Qur'an
     'Fahm Al Qur\'an Putra|18-11-29|tim|3|male': { name: 'Fahm Al Qur\'an Putra', maxAge: '18-11-29', isTeam: true, memberCount: 3, genderRestriction: 'male' },
     'Fahm Al Qur\'an Putri|18-11-29|tim|3|female': { name: 'Fahm Al Qur\'an Putri', maxAge: '18-11-29', isTeam: true, memberCount: 3, genderRestriction: 'female' },
-    // Tim: Syarh Al Qur'an
     'Syarh Al Qur\'an Putra|18-11-29|tim|3|male': { name: 'Syarh Al Qur\'an Putra', maxAge: '18-11-29', isTeam: true, memberCount: 3, genderRestriction: 'male' },
     'Syarh Al Qur\'an Putri|18-11-29|tim|3|female': { name: 'Syarh Al Qur\'an Putri', maxAge: '18-11-29', isTeam: true, memberCount: 3, genderRestriction: 'female' }
 };
@@ -84,6 +64,7 @@ let savedPersonalData = null;
 let savedTeamData = {};
 let confirmCallback = null;
 
+// Helper functions
 function updateProgress(percent) {
     const fill = document.getElementById('progressFill');
     if (fill) {
@@ -97,6 +78,41 @@ function showTab(tabName) {
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(tabName).classList.add('active');
     event.target.classList.add('active');
+}
+
+// VALIDASI JENIS KELAMIN
+function validateGender() {
+    if (!currentCabang) return { isValid: true, message: '' };
+    
+    const genderRestriction = currentCabang.genderRestriction;
+    if (!genderRestriction || genderRestriction === 'any') return { isValid: true, message: '' };
+    
+    const requiredGender = genderRestriction === 'male' ? 'Laki-laki' : 'Perempuan';
+    const cabangType = genderRestriction === 'male' ? 'Putra' : 'Putri';
+    
+    if (!currentCabang.isTeam) {
+        // Validasi untuk peserta personal
+        const selectedGender = document.getElementById('jenisKelamin')?.value;
+        if (selectedGender && selectedGender !== requiredGender) {
+            return {
+                isValid: false,
+                message: `❌ Jenis kelamin tidak sesuai! Cabang "${currentCabang.name}" khusus untuk peserta ${cabangType} (${requiredGender}).`
+            };
+        }
+    } else {
+        // Validasi untuk tim
+        for (let i = 1; i <= currentTeamMemberCount; i++) {
+            const memberGender = document.querySelector(`[name="memberJenisKelamin${i}"]`)?.value;
+            if (memberGender && memberGender !== requiredGender) {
+                return {
+                    isValid: false,
+                    message: `❌ Jenis kelamin anggota tim #${i} tidak sesuai! Cabang "${currentCabang.name}" khusus untuk tim ${cabangType}. Semua anggota harus berjenis kelamin ${requiredGender}.`
+                };
+            }
+        }
+    }
+    
+    return { isValid: true, message: '' };
 }
 
 function savePersonalData() {
@@ -123,7 +139,6 @@ function savePersonalData() {
         }
     }
     savedPersonalData.files = savedFiles;
-    
     Logger.log('Personal data saved', savedPersonalData);
 }
 
@@ -156,16 +171,13 @@ function saveTeamData() {
                 memberData.files[`doc${d}`] = uploadedFiles[`teamDoc${i}_${d}`];
             }
         }
-        
         savedTeamData.members[i] = memberData;
     }
-    
     Logger.log('Team data saved', savedTeamData);
 }
 
 function restoreTeamData() {
     Logger.log('Restoring team data after member count change');
-    
     if (!savedTeamData || !savedTeamData.members) {
         Logger.log('No saved team data to restore');
         return;
@@ -177,7 +189,6 @@ function restoreTeamData() {
     
     for (let i in savedTeamData.members) {
         const memberData = savedTeamData.members[i];
-        
         if (document.querySelector(`[name="memberNik${i}"]`)) {
             document.querySelector(`[name="memberNik${i}"]`).value = memberData.nik;
             document.querySelector(`[name="memberName${i}"]`).value = memberData.name;
@@ -202,7 +213,6 @@ function restoreTeamData() {
                     label.style.color = '#28a745';
                 }
             }
-            
             Logger.log(`Restored member ${i} data`);
         }
     }
@@ -210,8 +220,8 @@ function restoreTeamData() {
 
 function restoreToTeamMember1() {
     if (!savedPersonalData) return;
-    
     Logger.log('Restoring personal data to team member 1');
+    
     const fields = [
         { saved: 'nik', team: 'memberNik1' },
         { saved: 'nama', team: 'memberName1' },
@@ -262,8 +272,8 @@ function handleCabangChange() {
         saveTeamData();
     }
     
-    document.getElementById('personalSection').classList.remove('show');
-    document.getElementById('teamSection').classList.remove('show');
+    document.getElementById('personalSection').style.display = 'none';
+    document.getElementById('teamSection').style.display = 'none';
     document.getElementById('ageRequirement').style.display = 'none';
     document.getElementById('teamMembers').innerHTML = '';
     document.getElementById('personalDocs').innerHTML = '';
@@ -292,7 +302,7 @@ function handleCabangChange() {
         Logger.log('Switching to team mode');
         currentTeamMemberCount = 2;
         generateTeamForm(2);
-        document.getElementById('teamSection').classList.add('show');
+        document.getElementById('teamSection').style.display = 'block';
         dataDiriSection.style.display = 'none';
         rekeningPersonal.style.display = 'none';
         
@@ -309,7 +319,7 @@ function handleCabangChange() {
         dataDiriSection.style.display = 'block';
         rekeningPersonal.style.display = 'block';
         generatePersonalDocsForm();
-        document.getElementById('personalSection').classList.add('show');
+        document.getElementById('personalSection').style.display = 'block';
         
         setTimeout(() => {
             if (savedPersonalData && Object.keys(savedPersonalData).length > 0) {
@@ -363,10 +373,10 @@ function generatePersonalDocsForm() {
         div.className = 'form-group';
         div.innerHTML = `
             <label>${doc.id}. ${doc.name} *</label>
-            <small class="small-text">${doc.desc}</small>
-            <label for="personalDoc${doc.id}" class="file-input-label">📁 Pilih File</label>
-            <input type="file" id="personalDoc${doc.id}" accept=".pdf,.jpg,.jpeg,.png">
-            <span class="file-name" id="personalDoc${doc.id}Name">Belum ada file</span>
+            <small style="font-size: 0.85em; color: #666; display: block; margin-bottom: 10px;">${doc.desc}</small>
+            <label for="personalDoc${doc.id}" style="display: inline-block; padding: 12px 25px; background: linear-gradient(135deg, var(--secondary), #228b22); color: white; border-radius: 10px; cursor: pointer; font-weight: 600; transition: all 0.3s; margin-right: 10px;">📎 Pilih File</label>
+            <input type="file" id="personalDoc${doc.id}" accept=".pdf,.jpg,.jpeg,.png" style="display: none;">
+            <span class="file-name" id="personalDoc${doc.id}Name" style="color: #666; font-weight: 600;">Belum ada file</span>
         `;
         container.appendChild(div);
     });
@@ -385,21 +395,20 @@ function generateTeamForm(memberCount) {
     Logger.log('Generating team form for ' + memberCount + ' members');
     const container = document.getElementById('teamMembers');
     
-    let html = `<p style="margin-bottom: 20px; color: #666; font-size: 0.9em;">
-        Saat ini: ${memberCount} peserta ${memberCount < 3 ? '(klik tombol Tambah untuk menambah peserta ke-3)' : ''}
+    let html = `<p style="margin-bottom: 25px; color: #666; font-size: 0.95em; padding: 15px; background: #e6f3ff; border-radius: 10px;">
+        📊 Saat ini: ${memberCount} peserta ${memberCount < 3 ? '(klik tombol Tambah untuk menambah peserta ke-3)' : ''}
     </p>`;
     
     for (let i = 1; i <= memberCount; i++) {
         html += generateTeamMemberHTML(i);
     }
     
-    html += `<div style="margin-top: 20px;">
-        ${memberCount === 2 ? `<button type="button" class="btn-submit" onclick="addTeamMember()" style="background: #2e8b57;">➕ Tambah Peserta ke-3</button>` : ''}
-        ${memberCount === 3 ? `<button type="button" class="btn-reset" onclick="removeTeamMember()" style="background: #dc3545;">❌ Hapus Peserta ke-3</button>` : ''}
+    html += `<div style="margin-top: 25px;">
+        ${memberCount === 2 ? `<button type="button" onclick="addTeamMember()" style="background: linear-gradient(135deg, var(--secondary), #1e7e34);">➕ Tambah Peserta ke-3</button>` : ''}
+        ${memberCount === 3 ? `<button type="button" onclick="removeTeamMember()" style="background: linear-gradient(135deg, var(--danger), #c82333);">❌ Hapus Peserta ke-3</button>` : ''}
     </div>`;
     
     container.innerHTML = html;
-    
     setupTeamFormListeners(memberCount);
 }
 
@@ -407,13 +416,13 @@ function generateTeamMemberHTML(i) {
     const isOptional = i > 2;
     return `
         <div class="team-member" id="teamMember${i}">
-            <h4>Anggota Tim #${i} ${isOptional ? '(Opsional)' : '(Wajib)'}</h4>
+            <h4 style="color: var(--primary); margin-bottom: 20px; font-size: 1.2em;">Anggota Tim #${i} ${isOptional ? '(Opsional)' : '(Wajib)'}</h4>
             
-            <div class="form-row">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                 <div class="form-group">
                     <label>NIK ${isOptional ? '' : '*'}</label>
                     <input type="text" name="memberNik${i}" maxlength="16" inputmode="numeric" placeholder="NIK (16 digit)" ${isOptional ? '' : 'required'}>
-                    <small class="small-text">Hanya angka, tanpa spasi</small>
+                    <small style="font-size: 0.85em; color: #666; display: block; margin-top: 5px;">Hanya angka, tanpa spasi</small>
                 </div>
                 <div class="form-group">
                     <label>Nama Lengkap ${isOptional ? '' : '*'}</label>
@@ -421,7 +430,7 @@ function generateTeamMemberHTML(i) {
                 </div>
             </div>
             
-            <div class="form-row">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                 <div class="form-group">
                     <label>Jenis Kelamin ${isOptional ? '' : '*'}</label>
                     <select name="memberJenisKelamin${i}" class="gender-select" data-member="${i}" ${isOptional ? '' : 'required'}>
@@ -436,7 +445,7 @@ function generateTeamMemberHTML(i) {
                 </div>
             </div>
             
-            <div class="form-row">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                 <div class="form-group">
                     <label>Tanggal Lahir ${isOptional ? '' : '*'}</label>
                     <input type="date" name="memberBirthDate${i}" ${isOptional ? '' : 'required'}>
@@ -447,12 +456,12 @@ function generateTeamMemberHTML(i) {
                 </div>
             </div>
             
-            <div class="form-group">
+            <div class="form-group" style="margin-bottom: 20px;">
                 <label>Alamat Lengkap ${isOptional ? '' : '*'}</label>
                 <textarea name="memberAlamat${i}" rows="2" placeholder="Jalan, RT/RW, Desa, Kecamatan" ${isOptional ? '' : 'required'}></textarea>
             </div>
             
-            <div class="form-row">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                 <div class="form-group">
                     <label>No Telepon/WhatsApp ${isOptional ? '' : '*'}</label>
                     <input type="tel" name="memberNoTelepon${i}" placeholder="08xxxxxxxxxx" ${isOptional ? '' : 'required'}>
@@ -463,7 +472,7 @@ function generateTeamMemberHTML(i) {
                 </div>
             </div>
             
-            <div class="form-row">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                 <div class="form-group">
                     <label>Nama Rekening ${isOptional ? '' : '*'}</label>
                     <input type="text" name="memberNamaRek${i}" placeholder="Nama sesuai buku tabungan" ${isOptional ? '' : 'required'}>
@@ -474,48 +483,26 @@ function generateTeamMemberHTML(i) {
                 </div>
             </div>
             
-            <div class="form-group">
+            <div class="form-group" style="margin-bottom: 20px;">
                 <label>Nama Bank ${isOptional ? '' : '*'}</label>
                 <input type="text" name="memberNamaBank${i}" placeholder="BNI, BCA, Mandiri, dll" ${isOptional ? '' : 'required'}>
             </div>
             
-            <div class="team-member-docs">
-                <h5>📄 Dokumen Anggota #${i}</h5>
-                <div class="doc-group">
-                    <label>1. Surat Mandat ${isOptional ? '' : '*'}</label>
-                    <small class="small-text">Ketua LPTQ Kecamatan</small>
-                    <label for="teamDoc${i}_1" class="file-input-label">📁 Pilih</label>
-                    <input type="file" id="teamDoc${i}_1" accept=".pdf,.jpg,.jpeg,.png">
-                    <span class="file-name" id="teamDoc${i}_1Name">Belum ada</span>
-                </div>
-                <div class="doc-group">
-                    <label>2. KTP/KK/KIA ${isOptional ? '' : '*'}</label>
-                    <small class="small-text">6 bulan sebelum 1 Nov 2025</small>
-                    <label for="teamDoc${i}_2" class="file-input-label">📁 Pilih</label>
-                    <input type="file" id="teamDoc${i}_2" accept=".pdf,.jpg,.jpeg,.png">
-                    <span class="file-name" id="teamDoc${i}_2Name">Belum ada</span>
-                </div>
-                <div class="doc-group">
-                    <label>3. Sertifikat Kejuaraan ${isOptional ? '' : '*'}</label>
-                    <small class="small-text">MTQ Tingkat Kecamatan</small>
-                    <label for="teamDoc${i}_3" class="file-input-label">📁 Pilih</label>
-                    <input type="file" id="teamDoc${i}_3" accept=".pdf,.jpg,.jpeg,.png">
-                    <span class="file-name" id="teamDoc${i}_3Name">Belum ada</span>
-                </div>
-                <div class="doc-group">
-                    <label>4. Foto Buku Tabungan ${isOptional ? '' : '*'}</label>
-                    <small class="small-text">Nomor rekening</small>
-                    <label for="teamDoc${i}_4" class="file-input-label">📁 Pilih</label>
-                    <input type="file" id="teamDoc${i}_4" accept=".pdf,.jpg,.jpeg,.png">
-                    <span class="file-name" id="teamDoc${i}_4Name">Belum ada</span>
-                </div>
-                <div class="doc-group">
-                    <label>5. Pas Photo ${isOptional ? '' : '*'}</label>
-                    <small class="small-text">Latar belakang biru</small>
-                    <label for="teamDoc${i}_5" class="file-input-label">📁 Pilih</label>
-                    <input type="file" id="teamDoc${i}_5" accept=".jpg,.jpeg,.png">
-                    <span class="file-name" id="teamDoc${i}_5Name">Belum ada</span>
-                </div>
+            <div style="background: #e6f3ff; padding: 20px; margin-top: 20px; border-radius: 12px; border-left: 4px solid var(--primary);">
+                <h5 style="color: var(--primary); margin-bottom: 15px; font-size: 1.1em;">📄 Dokumen Anggota #${i}</h5>
+                ${[1,2,3,4,5].map(d => {
+                    const docs = ['Surat Mandat', 'KTP/KK/KIA', 'Sertifikat Kejuaraan', 'Foto Buku Tabungan', 'Pas Photo'];
+                    const descs = ['Ketua LPTQ Kecamatan', '6 bulan sebelum 1 Nov 2025', 'MTQ Tingkat Kecamatan', 'Nomor rekening', 'Latar biru'];
+                    return `
+                        <div style="margin-bottom: 15px;">
+                            <label>${d}. ${docs[d-1]} ${isOptional ? '' : '*'}</label>
+                            <small style="font-size: 0.85em; color: #666; display: block; margin-bottom: 8px;">${descs[d-1]}</small>
+                            <label for="teamDoc${i}_${d}" style="display: inline-block; padding: 10px 20px; background: linear-gradient(135deg, var(--secondary), #228b22); color: white; border-radius: 10px; cursor: pointer; font-weight: 600; transition: all 0.3s; margin-right: 10px;">📎 Pilih</label>
+                            <input type="file" id="teamDoc${i}_${d}" accept=".pdf,.jpg,.jpeg,.png" style="display: none;">
+                            <span class="file-name" id="teamDoc${i}_${d}Name" style="color: #666; font-weight: 600;">Belum ada</span>
+                        </div>
+                    `;
+                }).join('')}
             </div>
         </div>
     `;
@@ -539,11 +526,9 @@ function removeTeamMember() {
         Logger.log('Removing team member 3');
         saveTeamData();
         currentTeamMemberCount = 2;
-        
         for (let d = 1; d <= 5; d++) {
             delete uploadedFiles[`teamDoc3_${d}`];
         }
-        
         generateTeamForm(2);
         setTimeout(() => {
             restoreTeamData();
@@ -573,15 +558,19 @@ function setupTeamFormListeners(memberCount) {
             });
         }
         
+        // TAMBAHAN: Event listener untuk validasi jenis kelamin
+        const genderSelect = document.querySelector(`select[name="memberJenisKelamin${i}"]`);
+        if (genderSelect) {
+            genderSelect.addEventListener('change', updateSubmitButtonState);
+        }
+        
         const birthInput = document.querySelector(`input[name="memberBirthDate${i}"]`);
         if (birthInput) {
             birthInput.addEventListener('input', validateDateInput);
             birthInput.addEventListener('change', function() {
                 if (!this.value) return;
-                
                 const selectedDate = new Date(this.value);
                 const today = new Date();
-                
                 if (selectedDate > today) {
                     showResultModal(false, 'Tanggal Tidak Valid', 'Tanggal lahir tidak boleh lebih dari hari ini!');
                     this.value = '';
@@ -589,7 +578,6 @@ function setupTeamFormListeners(memberCount) {
                     updateSubmitButtonState();
                     return;
                 }
-                
                 const ageObj = calculateAge(this.value);
                 const umurInput = document.querySelector(`input[name="memberUmur${i}"]`);
                 if (umurInput && ageObj) {
@@ -622,7 +610,6 @@ function handleFileUpload(input, labelId, fileKey) {
     }
     
     const file = input.files[0];
-    
     if (file.size > 5 * 1024 * 1024) {
         Logger.error('File too large: ' + file.name);
         label.textContent = 'File terlalu besar (Max 5MB)';
@@ -644,11 +631,9 @@ function validateDateInput(e) {
     let value = e.target.value;
     value = value.replace(/[^\d-]/g, '');
     const parts = value.split('-');
-    
     if (parts[0] && parts[0].length > 4) {
         parts[0] = parts[0].slice(0, 4);
     }
-    
     if (parts[0]) {
         const year = parseInt(parts[0]);
         const currentYear = new Date().getFullYear();
@@ -656,7 +641,6 @@ function validateDateInput(e) {
             parts[0] = currentYear.toString();
         }
     }
-    
     e.target.value = parts.join('-');
 }
 
@@ -664,11 +648,9 @@ function calculateAge(birthDateStr) {
     if (!birthDateStr) return null;
     const birthDate = new Date(birthDateStr);
     const refDate = new Date(2025, 10, 1);
-    
     let years = refDate.getFullYear() - birthDate.getFullYear();
     let months = refDate.getMonth() - birthDate.getMonth();
     let days = refDate.getDate() - birthDate.getDate();
-    
     if (days < 0) {
         months--;
         const prevMonth = new Date(refDate.getFullYear(), refDate.getMonth(), 0);
@@ -678,7 +660,6 @@ function calculateAge(birthDateStr) {
         years--;
         months += 12;
     }
-    
     return { years, months, days };
 }
 
@@ -703,6 +684,15 @@ function updateSubmitButtonState() {
     if (!cabang || !currentCabang) {
         submitBtn.disabled = true;
         statusDiv.innerHTML = '⚠️ Pilih cabang lomba terlebih dahulu';
+        statusDiv.style.display = 'block';
+        return;
+    }
+    
+    // VALIDASI JENIS KELAMIN
+    const genderValidation = validateGender();
+    if (!genderValidation.isValid) {
+        submitBtn.disabled = true;
+        statusDiv.innerHTML = genderValidation.message;
         statusDiv.style.display = 'block';
         return;
     }
@@ -732,7 +722,6 @@ function updateSubmitButtonState() {
 
 function checkPersonalCompletion() {
     const reasons = [];
-    
     const tglLahir = document.getElementById('tglLahir').value;
     const nik = document.getElementById('nik').value;
     const nama = document.getElementById('nama').value;
@@ -770,16 +759,12 @@ function checkPersonalCompletion() {
         }
     }
     
-    return {
-        complete: reasons.length === 0,
-        reasons: reasons
-    };
+    return { complete: reasons.length === 0, reasons: reasons };
 }
 
 function checkTeamCompletion() {
     const reasons = [];
     const namaRegu = document.getElementById('namaRegu').value;
-    
     if (!namaRegu) {
         reasons.push('Nama regu/tim belum diisi');
     }
@@ -797,17 +782,13 @@ function checkTeamCompletion() {
         }
     }
     
-    return {
-        complete: reasons.length === 0,
-        reasons: reasons
-    };
+    return { complete: reasons.length === 0, reasons: reasons };
 }
 
 function isTeamMemberFilled(memberIndex) {
     const nikEl = document.querySelector(`input[name="memberNik${memberIndex}"]`);
     const nameEl = document.querySelector(`input[name="memberName${memberIndex}"]`);
     const birthEl = document.querySelector(`input[name="memberBirthDate${memberIndex}"]`);
-    
     return (nikEl?.value || nameEl?.value || birthEl?.value);
 }
 
@@ -855,19 +836,19 @@ function checkTeamMember(memberIndex, isRequired) {
     return reasons;
 }
 
+// Event listeners untuk personal form
 document.getElementById('nik').addEventListener('input', function() {
     this.value = this.value.replace(/[^0-9]/g, '').slice(0, 16);
     updateSubmitButtonState();
 });
 
-document.getElementById('tglLahir').addEventListener('input', validateDateInput);
+document.getElementById('jenisKelamin').addEventListener('change', updateSubmitButtonState);
 
+document.getElementById('tglLahir').addEventListener('input', validateDateInput);
 document.getElementById('tglLahir').addEventListener('change', function() {
     if (!this.value) return;
-    
     const selectedDate = new Date(this.value);
     const today = new Date();
-    
     if (selectedDate > today) {
         showResultModal(false, 'Tanggal Tidak Valid', 'Tanggal lahir tidak boleh lebih dari hari ini!');
         this.value = '';
@@ -875,12 +856,10 @@ document.getElementById('tglLahir').addEventListener('change', function() {
         updateSubmitButtonState();
         return;
     }
-    
     const ageObj = calculateAge(this.value);
     if (ageObj) {
         document.getElementById('umur').value = formatAge(ageObj);
     }
-    
     updateSubmitButtonState();
 });
 
@@ -897,7 +876,6 @@ function showConfirmModal(title, message) {
         document.getElementById('confirmTitle').textContent = title;
         document.getElementById('confirmMessage').textContent = message;
         document.getElementById('confirmModal').classList.add('show');
-        
         confirmCallback = resolve;
     });
 }
@@ -927,20 +905,18 @@ async function resetForm() {
     document.getElementById('ageRequirement').style.display = 'none';
     document.getElementById('dataDiriSection').style.display = 'none';
     document.getElementById('rekeningPersonalSection').style.display = 'none';
-    document.getElementById('personalSection').classList.remove('show');
-    document.getElementById('teamSection').classList.remove('show');
+    document.getElementById('personalSection').style.display = 'none';
+    document.getElementById('teamSection').style.display = 'none';
     document.getElementById('teamMembers').innerHTML = '';
     document.getElementById('personalDocs').innerHTML = '';
     
     uploadedFiles = {};
     savedPersonalData = null;
     savedTeamData = {};
-    
     currentCabang = null;
     currentTeamMemberCount = 2;
     document.getElementById('submitBtn').disabled = false;
     document.getElementById('submitStatusInfo').style.display = 'none';
-    
     Logger.log('Form reset complete');
 }
 
@@ -959,7 +935,6 @@ function closeResultModal() {
 function showLoadingOverlay(show, message = 'Memproses...') {
     const overlay = document.getElementById('loadingOverlay');
     const loadingMessage = document.getElementById('loadingMessage');
-    
     if (show) {
         loadingMessage.textContent = message;
         overlay.classList.add('show');
@@ -1000,7 +975,6 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
     
     try {
         const formData = new FormData();
-        
         formData.append('kecamatan', document.getElementById('kecamatan').value);
         formData.append('cabang', currentCabang.name);
         formData.append('maxAge', currentCabang.maxAge);
@@ -1011,17 +985,12 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
         updateProgress(10);
         
         let nikList = [];
-        let nameList = [];
         
         if (!currentCabang.isTeam) {
             const nik = document.getElementById('nik').value;
-            const nama = document.getElementById('nama').value;
-            
             nikList.push(nik);
-            nameList.push(nama);
-            
             formData.append('nik', nik);
-            formData.append('nama', nama);
+            formData.append('nama', document.getElementById('nama').value);
             formData.append('jenisKelamin', document.getElementById('jenisKelamin').value);
             formData.append('tempatLahir', document.getElementById('tempatLahir').value);
             formData.append('tglLahir', document.getElementById('tglLahir').value);
@@ -1036,10 +1005,7 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
         } else {
             for (let i = 1; i <= currentTeamMemberCount; i++) {
                 const nik = document.querySelector(`[name="memberNik${i}"]`)?.value;
-                const nama = document.querySelector(`[name="memberName${i}"]`)?.value;
-                
                 if (nik && nik !== '-') nikList.push(nik);
-                if (nama && nama !== '-') nameList.push(nama);
                 
                 const fields = ['Nik', 'Name', 'JenisKelamin', 'TempatLahir', 'BirthDate', 'Umur', 'Alamat', 'NoTelepon', 'Email', 'NamaRek', 'NoRek', 'NamaBank'];
                 fields.forEach(field => {
@@ -1051,10 +1017,7 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
         }
         
         formData.append('nikList', JSON.stringify(nikList));
-        formData.append('nameList', JSON.stringify(nameList));
-        
         Logger.log('NIK List for validation: ' + JSON.stringify(nikList));
-        Logger.log('Name List for validation: ' + JSON.stringify(nameList));
         
         updateProgress(15);
         showLoadingOverlay(true, 'Mengkonversi file...');
@@ -1112,15 +1075,13 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
                 document.getElementById('ageRequirement').style.display = 'none';
                 document.getElementById('dataDiriSection').style.display = 'none';
                 document.getElementById('rekeningPersonalSection').style.display = 'none';
-                document.getElementById('personalSection').classList.remove('show');
-                document.getElementById('teamSection').classList.remove('show');
+                document.getElementById('personalSection').style.display = 'none';
+                document.getElementById('teamSection').style.display = 'none';
                 document.getElementById('teamMembers').innerHTML = '';
                 document.getElementById('personalDocs').innerHTML = '';
-                
                 uploadedFiles = {};
                 savedPersonalData = null;
                 savedTeamData = {};
-                
                 currentCabang = null;
                 currentTeamMemberCount = 2;
                 document.getElementById('submitBtn').disabled = false;
@@ -1130,7 +1091,6 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
             Logger.error('Submission failed:', result.message);
             showResultModal(false, 'Registrasi Ditolak', result.message || 'Terjadi kesalahan saat menyimpan data');
         }
-        
     } catch (error) {
         Logger.error('Submit error:', error);
         showLoadingOverlay(false);
