@@ -3,11 +3,25 @@ const SHEET_ID = '1OO7VUbHhUbsqHc_EbGQVaG2Jq6EkIaTLIbLsmFnAb94';
 const FOLDER_ID = '1FHpgcmKbMrN84R29ZaVvHpNlh-AvA7_y';
 const SHEET_NAME = 'Peserta';
 
+// REGISTRATION TIME WINDOW (WIB = UTC+7)
+const REGISTRATION_START = new Date('2025-10-29T00:00:00+07:00');
+const REGISTRATION_END = new Date('2025-10-30T23:59:59+07:00');
+
+// MAX PARTICIPANTS PER BRANCH
+const MAX_PARTICIPANTS_PER_BRANCH = 62;
+
 // ===== FUNGSI UTAMA =====
 function doPost(e) {
   try {
     Logger.log('=== START doPost ===');
     Logger.log('Request received at: ' + new Date().toISOString());
+    
+    // Validate registration time
+    const now = new Date();
+    if (now < REGISTRATION_START || now > REGISTRATION_END) {
+      Logger.log('ERROR: Registration outside time window');
+      return createResponse(false, 'Pendaftaran hanya dapat dilakukan antara tanggal 29-30 Oktober 2025. Saat ini waktu pendaftaran telah ditutup atau belum dimulai.');
+    }
     
     const formData = e.parameter;
     Logger.log('Form data received: ' + JSON.stringify(Object.keys(formData)));
@@ -32,7 +46,7 @@ function doPost(e) {
       addHeaders(sheet);
     }
     
-    // Check for duplicates - HANYA VALIDASI NIK, TIDAK VALIDASI NAMA
+    // Check for duplicates
     Logger.log('Checking for duplicate NIK across ALL cabang');
     const nikList = formData.nikList ? JSON.parse(formData.nikList) : [];
     
@@ -42,19 +56,28 @@ function doPost(e) {
       return createResponse(false, duplicateCheck.message);
     }
     
-    // Process file uploads - HANYA JIKA TIDAK ADA DUPLIKAT
+    // Generate nomor peserta
+    Logger.log('Generating nomor peserta...');
+    const nomorPeserta = generateNomorPeserta(sheet, formData.cabangCode, formData.genderCode || formData.memberGenderCode1);
+    if (!nomorPeserta.success) {
+      Logger.log('Failed to generate nomor peserta: ' + nomorPeserta.message);
+      return createResponse(false, nomorPeserta.message);
+    }
+    Logger.log('Nomor peserta generated: ' + nomorPeserta.number);
+    
+    // Process file uploads
     Logger.log('Processing file uploads...');
     const fileLinks = processFileUploads(e, formData);
     Logger.log('Files processed: ' + Object.keys(fileLinks).length);
     
     // Prepare and append data
     Logger.log('Preparing row data...');
-    const rowData = prepareRowData(formData, fileLinks, sheet);
+    const rowData = prepareRowData(formData, fileLinks, sheet, nomorPeserta.number);
     sheet.appendRow(rowData);
     Logger.log('Data successfully appended to row: ' + sheet.getLastRow());
     
     Logger.log('=== END doPost SUCCESS ===');
-    return createResponse(true, 'Registrasi berhasil!');
+    return createResponse(true, 'Registrasi berhasil!', nomorPeserta.number);
     
   } catch (error) {
     Logger.log('=== ERROR in doPost ===');
@@ -65,7 +88,68 @@ function doPost(e) {
   }
 }
 
-// ===== CHECK DUPLICATES - HANYA NIK, TIDAK NAMA =====
+// ===== GENERATE NOMOR PESERTA =====
+function generateNomorPeserta(sheet, cabangCode, genderCode) {
+  try {
+    const lastRow = sheet.getLastRow();
+    
+    // Get existing numbers for this branch
+    const existingNumbers = [];
+    if (lastRow > 1) {
+      const dataRange = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn());
+      const data = dataRange.getValues();
+      
+      // Column index for Nomor Peserta (column 2, index 1)
+      const nomorPesertaCol = 1;
+      
+      for (let i = 0; i < data.length; i++) {
+        const nomorPeserta = data[i][nomorPesertaCol];
+        if (nomorPeserta && nomorPeserta.toString().startsWith(cabangCode + '-')) {
+          const num = parseInt(nomorPeserta.toString().split('-')[1]);
+          if (!isNaN(num)) {
+            existingNumbers.push(num);
+          }
+        }
+      }
+    }
+    
+    Logger.log('Existing numbers for ' + cabangCode + ': ' + existingNumbers.join(', '));
+    
+    // Determine if odd (female) or even (male)
+    const isOdd = genderCode === 'female';
+    
+    // Find next available number
+    let nextNumber = isOdd ? 1 : 2;
+    while (existingNumbers.indexOf(nextNumber) !== -1) {
+      nextNumber += 2;
+      
+      // Check if we've exceeded the limit
+      if (nextNumber > MAX_PARTICIPANTS_PER_BRANCH) {
+        return {
+          success: false,
+          message: 'Maaf, kuota peserta untuk cabang ' + cabangCode + ' (' + (isOdd ? 'Putri' : 'Putra') + ') sudah penuh. Maksimal 31 peserta per jenis kelamin.'
+        };
+      }
+    }
+    
+    const nomorPeserta = cabangCode + '-' + nextNumber;
+    Logger.log('Generated nomor peserta: ' + nomorPeserta);
+    
+    return {
+      success: true,
+      number: nomorPeserta
+    };
+    
+  } catch (error) {
+    Logger.log('Error in generateNomorPeserta: ' + error.message);
+    return {
+      success: false,
+      message: 'Terjadi kesalahan saat membuat nomor peserta. Silakan coba lagi.'
+    };
+  }
+}
+
+// ===== CHECK DUPLICATES =====
 function checkDuplicates(sheet, nikList) {
   try {
     const lastRow = sheet.getLastRow();
@@ -74,26 +158,23 @@ function checkDuplicates(sheet, nikList) {
       return { isValid: true };
     }
     
-    // Get all data from sheet (skip header row)
     const dataRange = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn());
     const data = dataRange.getValues();
     
     Logger.log('Checking against ' + data.length + ' existing registrations');
     
     // Column indices (0-based after getting values)
-    const cabangCol = 3; // Cabang Lomba column
-    const nikCol = 6; // NIK column
-    const member1NikCol = 18; // Anggota Tim #1 - NIK
-    const member2NikCol = 30; // Anggota Tim #2 - NIK
-    const member3NikCol = 42; // Anggota Tim #3 - NIK
+    const cabangCol = 4; // Cabang Lomba column
+    const nikCol = 7; // NIK column
+    const member1NikCol = 19; // Anggota Tim #1 - NIK
+    const member2NikCol = 31; // Anggota Tim #2 - NIK
+    const member3NikCol = 43; // Anggota Tim #3 - NIK
     
-    // Iterate through all existing registrations
     for (let i = 0; i < data.length; i++) {
       const row = data[i];
       const rowCabang = row[cabangCol];
-      const rowNum = i + 2; // Actual row number in sheet
+      const rowNum = i + 2;
       
-      // Collect all NIKs from this existing registration
       const existingNiks = [
         row[nikCol],
         row[member1NikCol],
@@ -103,7 +184,6 @@ function checkDuplicates(sheet, nikList) {
       
       Logger.log('Row ' + rowNum + ' (' + rowCabang + '): Found ' + existingNiks.length + ' NIKs');
       
-      // Check for NIK duplicates ONLY
       for (let newNik of nikList) {
         if (newNik && newNik.trim() !== '') {
           const trimmedNewNik = newNik.trim();
@@ -138,17 +218,25 @@ function checkDuplicates(sheet, nikList) {
 }
 
 // ===== CREATE RESPONSE =====
-function createResponse(success, message) {
-  return ContentService.createTextOutput(JSON.stringify({
+function createResponse(success, message, nomorPeserta) {
+  const response = {
     success: success,
     message: message
-  })).setMimeType(ContentService.MimeType.JSON);
+  };
+  
+  if (nomorPeserta) {
+    response.nomorPeserta = nomorPeserta;
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify(response))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 // ===== TAMBAH HEADER KE SHEET =====
 function addHeaders(sheet) {
   const headers = [
     'No',
+    'Nomor Peserta',
     'Timestamp',
     'Kecamatan',
     'Cabang Lomba',
@@ -233,11 +321,9 @@ function processFileUploads(e, formData) {
   const folder = DriveApp.getFolderById(FOLDER_ID);
   
   try {
-    // Get all file blobs from the request
     const allBlobs = e.parameters;
     Logger.log('Processing file blobs: ' + JSON.stringify(Object.keys(allBlobs)));
     
-    // Process all files
     for (let key in allBlobs) {
       if (key.startsWith('doc') || key.startsWith('teamDoc')) {
         try {
@@ -267,13 +353,13 @@ function processFileUploads(e, formData) {
 }
 
 // ===== SIAPKAN DATA UNTUK ROW =====
-function prepareRowData(formData, fileLinks, sheet) {
+function prepareRowData(formData, fileLinks, sheet, nomorPeserta) {
   const no = sheet.getLastRow();
   const timestamp = new Date().toLocaleString('id-ID');
   
-  // Data peserta utama
   const rowData = [
     no,
+    nomorPeserta,
     timestamp,
     formData.kecamatan || '',
     formData.cabang || '',

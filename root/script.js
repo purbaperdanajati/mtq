@@ -1,4 +1,9 @@
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyvlsXl1tqhHZDcUkuCEDcL3K9rqkcOFdLG6vhNLffMORVUsYbQCGPN-F4ZvPbcO2VX/exec';
+// ===== CONFIGURATION =====
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby7JSqYhjVgE0sQVweV_Zo14TZ8fanVIbuqtsCN8lFMoTNFctqvuC-hGsNuNXONuxM/exec';
+
+// REGISTRATION TIME WINDOW
+const REGISTRATION_START = new Date('2025-10-22T00:00:00+07:00'); // 29 Oktober 2025, 00:00 WIB
+const REGISTRATION_END = new Date('2025-10-30T23:59:59+07:00');   // 30 Oktober 2025, 23:59 WIB
 
 // Logger utility
 const Logger = {
@@ -15,46 +20,46 @@ const Logger = {
 };
 
 const cabangData = {
-    'Tartil Al Qur\'an Putra|12-11-29|personal|male': { name: 'Tartil Al Qur\'an Putra', maxAge: '12-11-29', isTeam: false, genderRestriction: 'male' },
-    'Tartil Al Qur\'an Putri|12-11-29|personal|female': { name: 'Tartil Al Qur\'an Putri', maxAge: '12-11-29', isTeam: false, genderRestriction: 'female' },
-    'Tilawah Anak-anak Putra|14-11-29|personal|male': { name: 'Tilawah Anak-anak Putra', maxAge: '14-11-29', isTeam: false, genderRestriction: 'male' },
-    'Tilawah Anak-anak Putri|14-11-29|personal|female': { name: 'Tilawah Anak-anak Putri', maxAge: '14-11-29', isTeam: false, genderRestriction: 'female' },
-    'Tilawah Remaja Putra|24-11-29|personal|male': { name: 'Tilawah Remaja Putra', maxAge: '24-11-29', isTeam: false, genderRestriction: 'male' },
-    'Tilawah Remaja Putri|24-11-29|personal|female': { name: 'Tilawah Remaja Putri', maxAge: '24-11-29', isTeam: false, genderRestriction: 'female' },
-    'Tilawah Dewasa Putra|40-11-29|personal|male': { name: 'Tilawah Dewasa Putra', maxAge: '40-11-29', isTeam: false, genderRestriction: 'male' },
-    'Tilawah Dewasa Putri|40-11-29|personal|female': { name: 'Tilawah Dewasa Putri', maxAge: '40-11-29', isTeam: false, genderRestriction: 'female' },
-    'Qira\'at Mujawwad Putra|40-11-29|personal|male': { name: 'Qira\'at Mujawwad Putra', maxAge: '40-11-29', isTeam: false, genderRestriction: 'male' },
-    'Qira\'at Mujawwad Putri|40-11-29|personal|female': { name: 'Qira\'at Mujawwad Putri', maxAge: '40-11-29', isTeam: false, genderRestriction: 'female' },
-    'Hafalan 1 Juz Putra|15-11-29|personal|male': { name: 'Hafalan 1 Juz Putra', maxAge: '15-11-29', isTeam: false, genderRestriction: 'male' },
-    'Hafalan 1 Juz Putri|15-11-29|personal|female': { name: 'Hafalan 1 Juz Putri', maxAge: '15-11-29', isTeam: false, genderRestriction: 'female' },
-    'Hafalan 5 Juz Putra|20-11-29|personal|male': { name: 'Hafalan 5 Juz Putra', maxAge: '20-11-29', isTeam: false, genderRestriction: 'male' },
-    'Hafalan 5 Juz Putri|20-11-29|personal|female': { name: 'Hafalan 5 Juz Putri', maxAge: '20-11-29', isTeam: false, genderRestriction: 'female' },
-    'Hafalan 10 Juz Putra|20-11-29|personal|male': { name: 'Hafalan 10 Juz Putra', maxAge: '20-11-29', isTeam: false, genderRestriction: 'male' },
-    'Hafalan 10 Juz Putri|20-11-29|personal|female': { name: 'Hafalan 10 Juz Putri', maxAge: '20-11-29', isTeam: false, genderRestriction: 'female' },
-    'Hafalan 20 Juz Putra|22-11-29|personal|male': { name: 'Hafalan 20 Juz Putra', maxAge: '22-11-29', isTeam: false, genderRestriction: 'male' },
-    'Hafalan 20 Juz Putri|22-11-29|personal|female': { name: 'Hafalan 20 Juz Putri', maxAge: '22-11-29', isTeam: false, genderRestriction: 'female' },
-    'Hafalan 30 Juz Putra|22-11-29|personal|male': { name: 'Hafalan 30 Juz Putra', maxAge: '22-11-29', isTeam: false, genderRestriction: 'male' },
-    'Hafalan 30 Juz Putri|22-11-29|personal|female': { name: 'Hafalan 30 Juz Putri', maxAge: '22-11-29', isTeam: false, genderRestriction: 'female' },
-    'Tafsir Arab Putra|22-11-29|personal|male': { name: 'Tafsir Arab Putra', maxAge: '22-11-29', isTeam: false, genderRestriction: 'male' },
-    'Tafsir Arab Putri|22-11-29|personal|female': { name: 'Tafsir Arab Putri', maxAge: '22-11-29', isTeam: false, genderRestriction: 'female' },
-    'Tafsir Indonesia Putra|34-11-29|personal|male': { name: 'Tafsir Indonesia Putra', maxAge: '34-11-29', isTeam: false, genderRestriction: 'male' },
-    'Tafsir Indonesia Putri|34-11-29|personal|female': { name: 'Tafsir Indonesia Putri', maxAge: '34-11-29', isTeam: false, genderRestriction: 'female' },
-    'Tafsir Inggris Putra|34-11-29|personal|male': { name: 'Tafsir Inggris Putra', maxAge: '34-11-29', isTeam: false, genderRestriction: 'male' },
-    'Tafsir Inggris Putri|34-11-29|personal|female': { name: 'Tafsir Inggris Putri', maxAge: '34-11-29', isTeam: false, genderRestriction: 'female' },
-    'Kaligrafi Naskah Putra|34-11-29|personal|male': { name: 'Kaligrafi Naskah Putra', maxAge: '34-11-29', isTeam: false, genderRestriction: 'male' },
-    'Kaligrafi Naskah Putri|34-11-29|personal|female': { name: 'Kaligrafi Naskah Putri', maxAge: '34-11-29', isTeam: false, genderRestriction: 'female' },
-    'Kaligrafi Hiasan Putra|34-11-29|personal|male': { name: 'Kaligrafi Hiasan Putra', maxAge: '34-11-29', isTeam: false, genderRestriction: 'male' },
-    'Kaligrafi Hiasan Putri|34-11-29|personal|female': { name: 'Kaligrafi Hiasan Putri', maxAge: '34-11-29', isTeam: false, genderRestriction: 'female' },
-    'Kaligrafi Dekorasi Putra|34-11-29|personal|male': { name: 'Kaligrafi Dekorasi Putra', maxAge: '34-11-29', isTeam: false, genderRestriction: 'male' },
-    'Kaligrafi Dekorasi Putri|34-11-29|personal|female': { name: 'Kaligrafi Dekorasi Putri', maxAge: '34-11-29', isTeam: false, genderRestriction: 'female' },
-    'Kaligrafi Kontemporer Putra|34-11-29|personal|male': { name: 'Kaligrafi Kontemporer Putra', maxAge: '34-11-29', isTeam: false, genderRestriction: 'male' },
-    'Kaligrafi Kontemporer Putri|34-11-29|personal|female': { name: 'Kaligrafi Kontemporer Putri', maxAge: '34-11-29', isTeam: false, genderRestriction: 'female' },
-    'KTIQ Putra|24-11-29|personal|male': { name: 'KTIQ Putra', maxAge: '24-11-29', isTeam: false, genderRestriction: 'male' },
-    'KTIQ Putri|24-11-29|personal|female': { name: 'KTIQ Putri', maxAge: '24-11-29', isTeam: false, genderRestriction: 'female' },
-    'Fahm Al Qur\'an Putra|18-11-29|tim|3|male': { name: 'Fahm Al Qur\'an Putra', maxAge: '18-11-29', isTeam: true, memberCount: 3, genderRestriction: 'male' },
-    'Fahm Al Qur\'an Putri|18-11-29|tim|3|female': { name: 'Fahm Al Qur\'an Putri', maxAge: '18-11-29', isTeam: true, memberCount: 3, genderRestriction: 'female' },
-    'Syarh Al Qur\'an Putra|18-11-29|tim|3|male': { name: 'Syarh Al Qur\'an Putra', maxAge: '18-11-29', isTeam: true, memberCount: 3, genderRestriction: 'male' },
-    'Syarh Al Qur\'an Putri|18-11-29|tim|3|female': { name: 'Syarh Al Qur\'an Putri', maxAge: '18-11-29', isTeam: true, memberCount: 3, genderRestriction: 'female' }
+    'Tartil Al Qur\'an Putra|12-11-29|personal|male|TA': { name: 'Tartil Al Qur\'an Putra', maxAge: '12-11-29', isTeam: false, genderRestriction: 'male', code: 'TA' },
+    'Tartil Al Qur\'an Putri|12-11-29|personal|female|TA': { name: 'Tartil Al Qur\'an Putri', maxAge: '12-11-29', isTeam: false, genderRestriction: 'female', code: 'TA' },
+    'Tilawah Anak-anak Putra|14-11-29|personal|male|TLA': { name: 'Tilawah Anak-anak Putra', maxAge: '14-11-29', isTeam: false, genderRestriction: 'male', code: 'TLA' },
+    'Tilawah Anak-anak Putri|14-11-29|personal|female|TLA': { name: 'Tilawah Anak-anak Putri', maxAge: '14-11-29', isTeam: false, genderRestriction: 'female', code: 'TLA' },
+    'Tilawah Remaja Putra|24-11-29|personal|male|TLR': { name: 'Tilawah Remaja Putra', maxAge: '24-11-29', isTeam: false, genderRestriction: 'male', code: 'TLR' },
+    'Tilawah Remaja Putri|24-11-29|personal|female|TLR': { name: 'Tilawah Remaja Putri', maxAge: '24-11-29', isTeam: false, genderRestriction: 'female', code: 'TLR' },
+    'Tilawah Dewasa Putra|40-11-29|personal|male|TLD': { name: 'Tilawah Dewasa Putra', maxAge: '40-11-29', isTeam: false, genderRestriction: 'male', code: 'TLD' },
+    'Tilawah Dewasa Putri|40-11-29|personal|female|TLD': { name: 'Tilawah Dewasa Putri', maxAge: '40-11-29', isTeam: false, genderRestriction: 'female', code: 'TLD' },
+    'Qira\'at Mujawwad Putra|40-11-29|personal|male|QM': { name: 'Qira\'at Mujawwad Putra', maxAge: '40-11-29', isTeam: false, genderRestriction: 'male', code: 'QM' },
+    'Qira\'at Mujawwad Putri|40-11-29|personal|female|QM': { name: 'Qira\'at Mujawwad Putri', maxAge: '40-11-29', isTeam: false, genderRestriction: 'female', code: 'QM' },
+    'Hafalan 1 Juz Putra|15-11-29|personal|male|H1J': { name: 'Hafalan 1 Juz Putra', maxAge: '15-11-29', isTeam: false, genderRestriction: 'male', code: 'H1J' },
+    'Hafalan 1 Juz Putri|15-11-29|personal|female|H1J': { name: 'Hafalan 1 Juz Putri', maxAge: '15-11-29', isTeam: false, genderRestriction: 'female', code: 'H1J' },
+    'Hafalan 5 Juz Putra|20-11-29|personal|male|H5J': { name: 'Hafalan 5 Juz Putra', maxAge: '20-11-29', isTeam: false, genderRestriction: 'male', code: 'H5J' },
+    'Hafalan 5 Juz Putri|20-11-29|personal|female|H5J': { name: 'Hafalan 5 Juz Putri', maxAge: '20-11-29', isTeam: false, genderRestriction: 'female', code: 'H5J' },
+    'Hafalan 10 Juz Putra|20-11-29|personal|male|H10J': { name: 'Hafalan 10 Juz Putra', maxAge: '20-11-29', isTeam: false, genderRestriction: 'male', code: 'H10J' },
+    'Hafalan 10 Juz Putri|20-11-29|personal|female|H10J': { name: 'Hafalan 10 Juz Putri', maxAge: '20-11-29', isTeam: false, genderRestriction: 'female', code: 'H10J' },
+    'Hafalan 20 Juz Putra|22-11-29|personal|male|H20J': { name: 'Hafalan 20 Juz Putra', maxAge: '22-11-29', isTeam: false, genderRestriction: 'male', code: 'H20J' },
+    'Hafalan 20 Juz Putri|22-11-29|personal|female|H20J': { name: 'Hafalan 20 Juz Putri', maxAge: '22-11-29', isTeam: false, genderRestriction: 'female', code: 'H20J' },
+    'Hafalan 30 Juz Putra|22-11-29|personal|male|H30J': { name: 'Hafalan 30 Juz Putra', maxAge: '22-11-29', isTeam: false, genderRestriction: 'male', code: 'H30J' },
+    'Hafalan 30 Juz Putri|22-11-29|personal|female|H30J': { name: 'Hafalan 30 Juz Putri', maxAge: '22-11-29', isTeam: false, genderRestriction: 'female', code: 'H30J' },
+    'Tafsir Arab Putra|22-11-29|personal|male|TFA': { name: 'Tafsir Arab Putra', maxAge: '22-11-29', isTeam: false, genderRestriction: 'male', code: 'TFA' },
+    'Tafsir Arab Putri|22-11-29|personal|female|TFA': { name: 'Tafsir Arab Putri', maxAge: '22-11-29', isTeam: false, genderRestriction: 'female', code: 'TFA' },
+    'Tafsir Indonesia Putra|34-11-29|personal|male|TFI': { name: 'Tafsir Indonesia Putra', maxAge: '34-11-29', isTeam: false, genderRestriction: 'male', code: 'TFI' },
+    'Tafsir Indonesia Putri|34-11-29|personal|female|TFI': { name: 'Tafsir Indonesia Putri', maxAge: '34-11-29', isTeam: false, genderRestriction: 'female', code: 'TFI' },
+    'Tafsir Inggris Putra|34-11-29|personal|male|TFE': { name: 'Tafsir Inggris Putra', maxAge: '34-11-29', isTeam: false, genderRestriction: 'male', code: 'TFE' },
+    'Tafsir Inggris Putri|34-11-29|personal|female|TFE': { name: 'Tafsir Inggris Putri', maxAge: '34-11-29', isTeam: false, genderRestriction: 'female', code: 'TFE' },
+    'Kaligrafi Naskah Putra|34-11-29|personal|male|KN': { name: 'Kaligrafi Naskah Putra', maxAge: '34-11-29', isTeam: false, genderRestriction: 'male', code: 'KN' },
+    'Kaligrafi Naskah Putri|34-11-29|personal|female|KN': { name: 'Kaligrafi Naskah Putri', maxAge: '34-11-29', isTeam: false, genderRestriction: 'female', code: 'KN' },
+    'Kaligrafi Hiasan Putra|34-11-29|personal|male|KH': { name: 'Kaligrafi Hiasan Putra', maxAge: '34-11-29', isTeam: false, genderRestriction: 'male', code: 'KH' },
+    'Kaligrafi Hiasan Putri|34-11-29|personal|female|KH': { name: 'Kaligrafi Hiasan Putri', maxAge: '34-11-29', isTeam: false, genderRestriction: 'female', code: 'KH' },
+    'Kaligrafi Dekorasi Putra|34-11-29|personal|male|KD': { name: 'Kaligrafi Dekorasi Putra', maxAge: '34-11-29', isTeam: false, genderRestriction: 'male', code: 'KD' },
+    'Kaligrafi Dekorasi Putri|34-11-29|personal|female|KD': { name: 'Kaligrafi Dekorasi Putri', maxAge: '34-11-29', isTeam: false, genderRestriction: 'female', code: 'KD' },
+    'Kaligrafi Kontemporer Putra|34-11-29|personal|male|KK': { name: 'Kaligrafi Kontemporer Putra', maxAge: '34-11-29', isTeam: false, genderRestriction: 'male', code: 'KK' },
+    'Kaligrafi Kontemporer Putri|34-11-29|personal|female|KK': { name: 'Kaligrafi Kontemporer Putri', maxAge: '34-11-29', isTeam: false, genderRestriction: 'female', code: 'KK' },
+    'KTIQ Putra|24-11-29|personal|male|KTIQ': { name: 'KTIQ Putra', maxAge: '24-11-29', isTeam: false, genderRestriction: 'male', code: 'KTIQ' },
+    'KTIQ Putri|24-11-29|personal|female|KTIQ': { name: 'KTIQ Putri', maxAge: '24-11-29', isTeam: false, genderRestriction: 'female', code: 'KTIQ' },
+    'Fahm Al Qur\'an Putra|18-11-29|tim|3|male|FAQ': { name: 'Fahm Al Qur\'an Putra', maxAge: '18-11-29', isTeam: true, memberCount: 3, genderRestriction: 'male', code: 'FAQ' },
+    'Fahm Al Qur\'an Putri|18-11-29|tim|3|female|FAQ': { name: 'Fahm Al Qur\'an Putri', maxAge: '18-11-29', isTeam: true, memberCount: 3, genderRestriction: 'female', code: 'FAQ' },
+    'Syarh Al Qur\'an Putra|18-11-29|tim|3|male|SAQ': { name: 'Syarh Al Qur\'an Putra', maxAge: '18-11-29', isTeam: true, memberCount: 3, genderRestriction: 'male', code: 'SAQ' },
+    'Syarh Al Qur\'an Putri|18-11-29|tim|3|female|SAQ': { name: 'Syarh Al Qur\'an Putri', maxAge: '18-11-29', isTeam: true, memberCount: 3, genderRestriction: 'female', code: 'SAQ' }
 };
 
 let currentCabang = null;
@@ -63,8 +68,79 @@ let uploadedFiles = {};
 let savedPersonalData = null;
 let savedTeamData = {};
 let confirmCallback = null;
+let countdownInterval = null;
 
-// Helper functions
+// ===== REGISTRATION TIME CONTROL =====
+function checkRegistrationTime() {
+    const now = new Date();
+    const isOpen = now >= REGISTRATION_START && now <= REGISTRATION_END;
+    
+    Logger.log('Checking registration time - Current: ' + now.toISOString());
+    Logger.log('Registration window: ' + REGISTRATION_START.toISOString() + ' to ' + REGISTRATION_END.toISOString());
+    Logger.log('Is open: ' + isOpen);
+    
+    const registrationClosed = document.getElementById('registrationClosed');
+    const registrationOpen = document.getElementById('registrationOpen');
+    const closedMessage = document.getElementById('closedMessage');
+    const countdownTimer = document.getElementById('countdownTimer');
+    
+    if (isOpen) {
+        registrationClosed.style.display = 'none';
+        registrationOpen.style.display = 'block';
+        if (countdownInterval) {
+            clearInterval(countdownInterval);
+        }
+    } else {
+        registrationClosed.style.display = 'block';
+        registrationOpen.style.display = 'none';
+        
+        if (now < REGISTRATION_START) {
+            closedMessage.textContent = 'Pendaftaran peserta MTQ ke-55 akan dibuka pada tanggal 29 Oktober 2025 pukul 00:00 WIB.';
+            countdownTimer.style.display = 'block';
+            startCountdown();
+        } else {
+            closedMessage.textContent = 'Mohon maaf, pendaftaran peserta MTQ ke-55 telah ditutup pada tanggal 30 Oktober 2025 pukul 23:59 WIB.';
+            countdownTimer.style.display = 'none';
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+        }
+    }
+    
+    return isOpen;
+}
+
+function startCountdown() {
+    updateCountdown();
+    countdownInterval = setInterval(updateCountdown, 1000);
+}
+
+function updateCountdown() {
+    const now = new Date();
+    const diff = REGISTRATION_START - now;
+    
+    if (diff <= 0) {
+        clearInterval(countdownInterval);
+        checkRegistrationTime();
+        return;
+    }
+    
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    
+    document.getElementById('days').textContent = String(days).padStart(2, '0');
+    document.getElementById('hours').textContent = String(hours).padStart(2, '0');
+    document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
+    document.getElementById('seconds').textContent = String(seconds).padStart(2, '0');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    checkRegistrationTime();
+    setInterval(checkRegistrationTime, 60000);
+});
+
 function updateProgress(percent) {
     const fill = document.getElementById('progressFill');
     if (fill) {
@@ -83,7 +159,6 @@ function showTab(tabName) {
 // VALIDASI JENIS KELAMIN
 function validateGender() {
     if (!currentCabang) return { isValid: true, message: '' };
-    
     const genderRestriction = currentCabang.genderRestriction;
     if (!genderRestriction || genderRestriction === 'any') return { isValid: true, message: '' };
     
@@ -91,27 +166,11 @@ function validateGender() {
     const cabangType = genderRestriction === 'male' ? 'Putra' : 'Putri';
     
     if (!currentCabang.isTeam) {
-        // Validasi untuk peserta personal
         const selectedGender = document.getElementById('jenisKelamin')?.value;
         if (selectedGender && selectedGender !== requiredGender) {
-            return {
-                isValid: false,
-                message: `❌ Jenis kelamin tidak sesuai! Cabang "${currentCabang.name}" khusus untuk peserta ${cabangType} (${requiredGender}).`
-            };
-        }
-    } else {
-        // Validasi untuk tim
-        for (let i = 1; i <= currentTeamMemberCount; i++) {
-            const memberGender = document.querySelector(`[name="memberJenisKelamin${i}"]`)?.value;
-            if (memberGender && memberGender !== requiredGender) {
-                return {
-                    isValid: false,
-                    message: `❌ Jenis kelamin anggota tim #${i} tidak sesuai! Cabang "${currentCabang.name}" khusus untuk tim ${cabangType}. Semua anggota harus berjenis kelamin ${requiredGender}.`
-                };
-            }
+            return { isValid: false, message: `❌ Jenis kelamin tidak sesuai! Cabang "${currentCabang.name}" khusus untuk peserta ${cabangType}` };
         }
     }
-    
     return { isValid: true, message: '' };
 }
 
@@ -558,7 +617,6 @@ function setupTeamFormListeners(memberCount) {
             });
         }
         
-        // TAMBAHAN: Event listener untuk validasi jenis kelamin
         const genderSelect = document.querySelector(`select[name="memberJenisKelamin${i}"]`);
         if (genderSelect) {
             genderSelect.addEventListener('change', updateSubmitButtonState);
@@ -688,7 +746,6 @@ function updateSubmitButtonState() {
         return;
     }
     
-    // VALIDASI JENIS KELAMIN
     const genderValidation = validateGender();
     if (!genderValidation.isValid) {
         submitBtn.disabled = true;
@@ -891,33 +948,17 @@ function closeConfirmModal(result) {
 async function resetForm() {
     const confirmed = await showConfirmModal(
         'Konfirmasi Bersihkan Form',
-        'Apakah Anda yakin ingin membersihkan semua isian form?\n\nSemua data yang sudah diisi akan hilang.'
+        'Apakah Anda yakin ingin membersihkan semua isian form?'
     );
     
-    if (!confirmed) {
-        Logger.log('Form reset cancelled by user');
-        return;
-    }
+    if (!confirmed) return;
     
-    Logger.log('Resetting form');
     document.getElementById('registrationForm').reset();
     document.getElementById('umur').value = '';
-    document.getElementById('ageRequirement').style.display = 'none';
-    document.getElementById('dataDiriSection').style.display = 'none';
-    document.getElementById('rekeningPersonalSection').style.display = 'none';
-    document.getElementById('personalSection').style.display = 'none';
-    document.getElementById('teamSection').style.display = 'none';
-    document.getElementById('teamMembers').innerHTML = '';
-    document.getElementById('personalDocs').innerHTML = '';
-    
     uploadedFiles = {};
     savedPersonalData = null;
     savedTeamData = {};
     currentCabang = null;
-    currentTeamMemberCount = 2;
-    document.getElementById('submitBtn').disabled = false;
-    document.getElementById('submitStatusInfo').style.display = 'none';
-    Logger.log('Form reset complete');
 }
 
 function showResultModal(success, title, message) {
@@ -954,21 +995,21 @@ async function fileToBase64(file) {
         reader.onerror = error => reject(error);
     });
 }
-
-document.getElementById('registrationForm').addEventListener('submit', async function(e) {
+document.getElementById('registrationForm')?.addEventListener('submit', async function(e) {
     e.preventDefault();
+    
+    if (!checkRegistrationTime()) {
+        showResultModal(false, 'Pendaftaran Ditutup', 'Mohon maaf, waktu pendaftaran telah berakhir atau belum dimulai.');
+        return;
+    }
     
     const confirmed = await showConfirmModal(
         'Konfirmasi Pendaftaran',
         'Apakah Anda yakin semua data sudah benar?\n\nData yang sudah dikirim tidak dapat diubah.'
     );
     
-    if (!confirmed) {
-        Logger.log('Form submission cancelled by user');
-        return;
-    }
+    if (!confirmed) return;
     
-    Logger.log('=== FORM SUBMISSION STARTED ===');
     showLoadingOverlay(true, 'Memvalidasi data...');
     document.getElementById('progressContainer').style.display = 'block';
     updateProgress(5);
@@ -978,14 +1019,8 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
         formData.append('kecamatan', document.getElementById('kecamatan').value);
         formData.append('cabang', currentCabang.name);
         formData.append('maxAge', currentCabang.maxAge);
-        formData.append('namaRegu', document.getElementById('namaRegu')?.value || '-');
-        formData.append('memberCount', currentTeamMemberCount);
         
-        Logger.log('Basic data added');
-        updateProgress(10);
-        
-        let nikList = [];
-        
+        const nikList = [];
         if (!currentCabang.isTeam) {
             const nik = document.getElementById('nik').value;
             nikList.push(nik);
@@ -1001,27 +1036,12 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
             formData.append('namaRek', document.getElementById('namaRek').value);
             formData.append('noRek', document.getElementById('noRek').value);
             formData.append('namaBank', document.getElementById('namaBank').value);
-            Logger.log('Personal data added');
-        } else {
-            for (let i = 1; i <= currentTeamMemberCount; i++) {
-                const nik = document.querySelector(`[name="memberNik${i}"]`)?.value;
-                if (nik && nik !== '-') nikList.push(nik);
-                
-                const fields = ['Nik', 'Name', 'JenisKelamin', 'TempatLahir', 'BirthDate', 'Umur', 'Alamat', 'NoTelepon', 'Email', 'NamaRek', 'NoRek', 'NamaBank'];
-                fields.forEach(field => {
-                    const el = document.querySelector(`[name="member${field}${i}"]`);
-                    formData.append(`member${field}${i}`, el?.value || '-');
-                });
-            }
-            Logger.log('Team data added for ' + currentTeamMemberCount + ' members');
         }
         
         formData.append('nikList', JSON.stringify(nikList));
-        Logger.log('NIK List for validation: ' + JSON.stringify(nikList));
-        
         updateProgress(15);
-        showLoadingOverlay(true, 'Mengkonversi file...');
         
+        showLoadingOverlay(true, 'Mengkonversi file...');
         let fileCount = 0;
         const totalFiles = Object.keys(uploadedFiles).length;
         
@@ -1034,17 +1054,15 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
                     formData.append(key + '_name', file.name);
                     formData.append(key + '_type', file.type);
                     fileCount++;
-                    Logger.log(`File converted: ${key} (${fileCount}/${totalFiles})`);
                     updateProgress(15 + (fileCount / totalFiles) * 45);
                 } catch (fileError) {
-                    Logger.error('Error converting file: ' + key, fileError);
+                    Logger.error('Error converting file', fileError);
                 }
             }
         }
         
         updateProgress(60);
         showLoadingOverlay(true, 'Mengirim data ke server...');
-        Logger.log('Sending data to Google Apps Script');
         
         const response = await fetch(APPS_SCRIPT_URL, {
             method: 'POST',
@@ -1052,49 +1070,20 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
         });
         
         updateProgress(80);
-        Logger.log('Response received, parsing...');
-        
         const result = await response.json();
-        Logger.log('Result:', result);
-        
         updateProgress(100);
         showLoadingOverlay(false);
         
         if (result.success) {
-            const displayName = currentCabang.isTeam ? 
-                document.querySelector(`input[name="memberName1"]`)?.value : 
-                document.getElementById('nama').value;
-            showResultModal(true, 'Registrasi Berhasil!', 
-                `Nama: ${displayName}\nCabang: ${currentCabang.name}\n\nData Anda telah tersimpan.\nEmail konfirmasi akan dikirim dalam 24 jam.`);
-            Logger.log('=== FORM SUBMISSION SUCCESS ===');
-            
-            setTimeout(() => {
-                Logger.log('Auto-clearing form after successful submission');
-                document.getElementById('registrationForm').reset();
-                document.getElementById('umur').value = '';
-                document.getElementById('ageRequirement').style.display = 'none';
-                document.getElementById('dataDiriSection').style.display = 'none';
-                document.getElementById('rekeningPersonalSection').style.display = 'none';
-                document.getElementById('personalSection').style.display = 'none';
-                document.getElementById('teamSection').style.display = 'none';
-                document.getElementById('teamMembers').innerHTML = '';
-                document.getElementById('personalDocs').innerHTML = '';
-                uploadedFiles = {};
-                savedPersonalData = null;
-                savedTeamData = {};
-                currentCabang = null;
-                currentTeamMemberCount = 2;
-                document.getElementById('submitBtn').disabled = false;
-                document.getElementById('submitStatusInfo').style.display = 'none';
-            }, 2000);
+            showResultModal(true, 'Registrasi Berhasil!', 'Data Anda telah tersimpan.\nEmail konfirmasi akan dikirim dalam 24 jam.');
+            setTimeout(() => location.reload(), 2000);
         } else {
-            Logger.error('Submission failed:', result.message);
-            showResultModal(false, 'Registrasi Ditolak', result.message || 'Terjadi kesalahan saat menyimpan data');
+            showResultModal(false, 'Registrasi Ditolak', result.message || 'Terjadi kesalahan');
         }
     } catch (error) {
-        Logger.error('Submit error:', error);
+        Logger.error('Submit error', error);
         showLoadingOverlay(false);
-        showResultModal(false, 'Kesalahan Sistem', 'Terjadi kesalahan saat mengirim data: ' + error.message + '\n\nSilakan coba lagi atau hubungi admin jika masalah berlanjut.');
+        showResultModal(false, 'Kesalahan Sistem', 'Terjadi kesalahan: ' + error.message);
     } finally {
         document.getElementById('progressContainer').style.display = 'none';
     }
