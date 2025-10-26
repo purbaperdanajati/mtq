@@ -212,6 +212,8 @@ function handleFileUploadOnly(e) {
     
     const nomorPeserta = e.parameter.nomorPeserta;
     Logger.log('Nomor Peserta received: ' + nomorPeserta);
+    Logger.log('Type: ' + typeof nomorPeserta);
+    Logger.log('Length: ' + (nomorPeserta ? nomorPeserta.toString().length : 'null'));
     
     if (!nomorPeserta) {
       Logger.log('ERROR: nomorPeserta not provided');
@@ -229,41 +231,64 @@ function handleFileUploadOnly(e) {
     
     Logger.log('Sheet found: ' + SHEET_NAME);
     
-    // ===== FIND ROW WITH NOMOR PESERTA =====
-    Logger.log('Finding row with nomor peserta: ' + nomorPeserta);
-    
+    // ===== DEBUG: Check total rows =====
     const lastRow = sheet.getLastRow();
     Logger.log('Total rows in sheet: ' + lastRow);
     
     if (lastRow <= 1) {
-      Logger.log('ERROR: No data in sheet');
+      Logger.log('ERROR: No data in sheet (only headers)');
       return createResponse(false, 'Tidak ada data registrasi di sheet');
     }
     
-    // Get nomor peserta column (column B = index 1)
+    // ===== DEBUG: Get all nomor peserta untuk comparison =====
+    Logger.log('Getting all nomor peserta from column B...');
     const nomorPesertaRange = sheet.getRange(2, 2, lastRow - 1, 1);
     const nomorPesertaValues = nomorPesertaRange.getValues();
     
-    Logger.log('Searching through ' + nomorPesertaValues.length + ' rows...');
+    Logger.log('Total entries to search: ' + nomorPesertaValues.length);
+    Logger.log('Searching for: "' + nomorPeserta + '" (length: ' + nomorPeserta.toString().length + ')');
     
-    let targetRow = -1;
-    for (let i = 0; i < nomorPesertaValues.length; i++) {
+    // ===== IMPORTANT: Show last 10 nomor peserta untuk reference =====
+    Logger.log('Last 10 nomor peserta in sheet:');
+    const startIdx = Math.max(0, nomorPesertaValues.length - 10);
+    for (let i = startIdx; i < nomorPesertaValues.length; i++) {
       const cellValue = nomorPesertaValues[i][0];
       const cellStr = cellValue.toString().trim();
-      const searchStr = nomorPeserta.toString().trim();
+      Logger.log(`  Row ${i + 2}: "${cellStr}" (type: ${typeof cellValue}, length: ${cellStr.length})`);
+    }
+    
+    // ===== SEARCH: Case-insensitive, trimmed comparison =====
+    let targetRow = -1;
+    const searchStr = nomorPeserta.toString().trim().toUpperCase();
+    
+    Logger.log('Search string (normalized): "' + searchStr + '"');
+    
+    for (let i = 0; i < nomorPesertaValues.length; i++) {
+      const cellValue = nomorPesertaValues[i][0];
+      const cellStr = cellValue.toString().trim().toUpperCase();
       
-      Logger.log(`Row ${i + 2}: "${cellStr}" vs "${searchStr}"`);
+      // Show comparison untuk beberapa baris
+      if (i < 5 || i >= nomorPesertaValues.length - 5) {
+        Logger.log(`Compare: "${cellStr}" (row ${i + 2}) vs "${searchStr}"`);
+      }
       
       if (cellStr === searchStr) {
-        targetRow = i + 2; // +2 karena mulai dari row 2
-        Logger.log('✓ FOUND: Target row = ' + targetRow);
+        targetRow = i + 2;
+        Logger.log('✓ MATCH FOUND at row ' + targetRow);
         break;
       }
     }
     
     if (targetRow === -1) {
-      Logger.log('ERROR: Row with nomor peserta "' + nomorPeserta + '" not found');
-      return createResponse(false, 'Data registrasi dengan nomor peserta ' + nomorPeserta + ' tidak ditemukan di sheet');
+      Logger.log('❌ ERROR: No match found!');
+      Logger.log('Full search array (first 20):');
+      for (let i = 0; i < Math.min(20, nomorPesertaValues.length); i++) {
+        Logger.log(`  [${i}] = "${nomorPesertaValues[i][0]}"`);
+      }
+      
+      return createResponse(false, 
+        'Data registrasi dengan nomor peserta "' + nomorPeserta + '" tidak ditemukan di sheet. ' +
+        'Sistem menemukan ' + nomorPesertaValues.length + ' data registrasi, tapi nomor peserta yang dicari tidak ada.');
     }
     
     Logger.log('Target row confirmed: ' + targetRow);
@@ -387,6 +412,77 @@ function debugListHeaders() {
   }
   
   return headers;
+}
+
+function debugCheckRecentRegistration() {
+  Logger.log('=== DEBUG CHECK RECENT REGISTRATION ===');
+  
+  try {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const sheet = ss.getSheetByName(SHEET_NAME);
+    
+    if (!sheet) {
+      Logger.log('ERROR: Sheet not found');
+      return;
+    }
+    
+    const lastRow = sheet.getLastRow();
+    Logger.log('Last row: ' + lastRow);
+    
+    if (lastRow <= 1) {
+      Logger.log('No data in sheet');
+      return;
+    }
+    
+    // Get last 3 rows data
+    Logger.log('Last 3 registrations:');
+    const dataRange = sheet.getRange(Math.max(2, lastRow - 2), 1, 3, 5);
+    const data = dataRange.getValues();
+    
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+      Logger.log(`Row ${lastRow - 2 + i}:`);
+      Logger.log(`  No: ${row[0]}`);
+      Logger.log(`  Nomor Peserta: "${row[1]}" (type: ${typeof row[1]})`);
+      Logger.log(`  Timestamp: ${row[2]}`);
+      Logger.log(`  Kecamatan: ${row[3]}`);
+      Logger.log(`  Cabang: ${row[4]}`);
+    }
+    
+  } catch (error) {
+    Logger.log('Error: ' + error.message);
+  }
+}
+
+function debugCheckNomorPesertaDataType() {
+  Logger.log('=== DEBUG NOMOR PESERTA DATA TYPE ===');
+  
+  try {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const sheet = ss.getSheetByName(SHEET_NAME);
+    
+    const lastRow = sheet.getLastRow();
+    
+    if (lastRow > 1) {
+      // Get last 5 values dari column B
+      const range = sheet.getRange(Math.max(2, lastRow - 4), 2, 5, 1);
+      const values = range.getValues();
+      
+      Logger.log('Last 5 nomor peserta values:');
+      values.forEach((row, idx) => {
+        const val = row[0];
+        Logger.log(`  Row ${Math.max(2, lastRow - 4) + idx}: "${val}"`);
+        Logger.log(`    Type: ${typeof val}`);
+        Logger.log(`    Constructor: ${val.constructor.name}`);
+        Logger.log(`    String: "${val.toString()}"`);
+        Logger.log(`    Trimmed: "${val.toString().trim()}"`);
+        Logger.log(`    Length: ${val.toString().length}`);
+      });
+    }
+    
+  } catch (error) {
+    Logger.log('Error: ' + error.message);
+  }
 }
 
 function debugCheckSpreadsheetStatus() {
