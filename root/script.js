@@ -1,6 +1,6 @@
 // script.js
 // ===== CONFIGURATION =====
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzoRAgd2Ntg5wBter9at6dKYB8kYGOyHwA63a4Ox8jlHn0H_YUvSy3FibwMgcLBJWOU/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzyWCSi8pEQcDiR_jHxfAcLTErfqU0JhD6eVEZHdbUhTIDtma2F3SRZR8tWLirhvK6T/exec';
 const REGISTRATION_START = new Date('2025-10-25T09:00:00+07:00');
 const REGISTRATION_END = new Date('2025-10-30T23:59:59+07:00');
 const MAX_FILE_SIZE_MB = 5;
@@ -8,31 +8,30 @@ const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 // ===== DEVELOPER MODE CONFIG (BARU) =====
 const DEV_CONFIG = {
-    enabled: true,              // Set ke true untuk enable developer mode & tools
-    loggerEnabled: true          // Set ke false untuk disable semua console logs
+    enabled: true,
+    loggerEnabled: true
 };
 
 const Logger = {
     log: function(message, data = null) {
-        if (!DEV_CONFIG.loggerEnabled) return;  // Cek config terlebih dahulu
+        if (!DEV_CONFIG.loggerEnabled) return;
         const timestamp = new Date().toISOString();
         console.log(`[${timestamp}] ${message}`, data || '');
     },
     error: function(message, error = null) {
-        if (!DEV_CONFIG.loggerEnabled) return;  // Cek config terlebih dahulu
+        if (!DEV_CONFIG.loggerEnabled) return;
         const timestamp = new Date().toISOString();
         console.error(`[${timestamp}] ERROR: ${message}`, error || '');
     }
 };
 
 const progressTracker = {
-    totalSteps: 3,              // Total 3 tahap: Validasi, Konversi, Upload
-    currentStep: 0,             // 0 = Validasi, 1 = Konversi, 2 = Upload
-    filesTotal: 0,              // Total files yang akan dikonversi
-    filesProcessed: 0,          // Files yang sudah dikonversi
+    totalSteps: 3,
+    currentStep: 0,
+    filesTotal: 0,
+    filesProcessed: 0,
     
     calculateProgress: function() {
-        // Basis progress: 15% untuk validasi, 45% untuk konversi, 25% untuk upload
         let baseProgress = (this.currentStep / this.totalSteps) * 60;
         let fileProgress = (this.filesProcessed / Math.max(this.filesTotal, 1)) * 25;
         return Math.min(Math.round(baseProgress + fileProgress + 15), 99);
@@ -46,7 +45,6 @@ const progressTracker = {
         ];
         const step = steps[this.currentStep] || 'Memproses';
         
-        // Jika ada files, tampilkan progress konversi
         if (this.filesTotal > 0 && this.currentStep > 0) {
             return `${step}... (${this.filesProcessed}/${this.filesTotal} file)`;
         }
@@ -60,8 +58,100 @@ const progressTracker = {
     }
 };
 
-// ===== REJECTED DATA MANAGEMENT =====
+// ===== UPLOAD STATUS POLLING =====
+let uploadPollingInterval = null;
+let uploadPollingCount = 0;
+const MAX_POLLING_ATTEMPTS = 120; // 2 menit max
+
+function startUploadPolling(nomorPeserta) {
+  Logger.log('🔄 Starting upload polling for: ' + nomorPeserta);
+  
+  uploadPollingCount = 0;
+  uploadPollingInterval = setInterval(() => {
+    checkUploadStatus(nomorPeserta);
+  }, 2000); // Check setiap 2 detik
+}
+
+function stopUploadPolling() {
+  if (uploadPollingInterval) {
+    clearInterval(uploadPollingInterval);
+    uploadPollingInterval = null;
+    Logger.log('✓ Upload polling stopped');
+  }
+}
+
+async function checkUploadStatus(nomorPeserta) {
+  uploadPollingCount++;
+  
+  try {
+    Logger.log(`🔍 Upload check #${uploadPollingCount} for ${nomorPeserta}`);
+    
+    if (uploadPollingCount > MAX_POLLING_ATTEMPTS) {
+      Logger.log('⏱️ Polling timeout - marking as completed');
+      stopUploadPolling();
+      completeUploadModal();
+      return;
+    }
+    
+    const response = await fetch(
+      `${APPS_SCRIPT_URL}?action=checkUploadStatus&nomorPeserta=${encodeURIComponent(nomorPeserta)}`
+    );
+    
+    const result = await response.json();
+    Logger.log('Upload status: ' + JSON.stringify(result));
+    
+    if (result.uploadComplete) {
+      Logger.log('✅ All files uploaded successfully!');
+      stopUploadPolling();
+      completeUploadModal();
+    } else {
+      updateUploadProgress(result.filesUploaded, result.totalFiles);
+    }
+    
+  } catch (error) {
+    Logger.error('Error checking upload status:', error);
+  }
+}
+
+function updateUploadProgress(uploaded, total) {
+  const progressText = document.getElementById('uploadProgressText');
+  if (progressText) {
+    const percent = total > 0 ? Math.round((uploaded / total) * 100) : 0;
+    progressText.innerHTML = `📤 Mengupload file... (${uploaded}/${total} file, ${percent}%)`;
+    Logger.log(`Progress: ${uploaded}/${total} (${percent}%)`);
+  }
+}
+
+function completeUploadModal() {
+  const modal = document.getElementById('resultModal');
+  const progressDiv = document.getElementById('uploadProgressDiv');
+  const closeBtn = modal.querySelector('button');
+  
+  if (progressDiv) {
+    progressDiv.innerHTML = '✅ Semua file telah diupload!';
+    progressDiv.style.color = '#10b981';
+    progressDiv.style.fontWeight = '600';
+  }
+  
+  if (closeBtn) {
+    closeBtn.disabled = false;
+    closeBtn.style.opacity = '1';
+    closeBtn.style.cursor = 'pointer';
+    Logger.log('✓ Close button enabled');
+  }
+}
+
 let rejectedDataInitialized = false;
+let currentCabang = null;
+let currentTeamMemberCount = 2;
+let uploadedFiles = {};
+let savedPersonalData = null;
+let savedTeamData = {};
+let confirmCallback = null;
+let countdownInterval = null;
+let lastRegistrationWasSuccessful = false;
+
+// ===== REJECTED DATA MANAGEMENT =====
 
 function updateRejectedDataTabVisibility() {
     const now = new Date();
@@ -248,14 +338,6 @@ function updateProgressDetailed(percent, message) {
         msgEl.textContent = message;
     }
 }
-
-let currentCabang = null;
-let currentTeamMemberCount = 2;
-let uploadedFiles = {};
-let savedPersonalData = null;
-let savedTeamData = {};
-let confirmCallback = null;
-let countdownInterval = null;
 
 function formatDateInput(e) {
     let value = e.target.value;
@@ -1423,15 +1505,11 @@ function closeConfirmModal(result) {
 }
 
 function showResultModal(success, title, message, details = null) {
-    // SIMPAN STATUS KE FLAG
     lastRegistrationWasSuccessful = success;
     Logger.log('showResultModal - Setting lastRegistrationWasSuccessful: ' + success);
     
     const modal = document.getElementById('resultModal');
-    
-    // ===== PERBAIKAN: GUNAKAN UNICODE ESCAPE SEQUENCES =====
-    // Sebelumnya: ✓ dan ✗ (plain emoji - sering error)
-    // Sekarang: \u2705 (✅) dan \u274C (❌) (unicode - always work)
+    const resultContent = modal.querySelector('.result-content');
     
     if (success) {
         document.getElementById('resultIcon').textContent = '\u2705'; // ✅
@@ -1466,6 +1544,41 @@ function showResultModal(success, title, message, details = null) {
     }
     
     document.getElementById('resultMessage').textContent = messageText;
+    
+    // ===== NEW: UPLOAD PROGRESS SECTION =====
+    if (success && details && details.nomorPeserta) {
+        // Tambahkan progress div
+        const progressDiv = document.createElement('div');
+        progressDiv.id = 'uploadProgressDiv';
+        progressDiv.style.cssText = `
+            margin-top: 20px;
+            padding: 15px;
+            background: #e6f3ff;
+            border-radius: 10px;
+            text-align: center;
+            color: #0056b3;
+            font-weight: 600;
+            font-size: 0.95em;
+            animation: pulse 1.5s infinite;
+        `;
+        progressDiv.innerHTML = '📤 Mengupload file... (0/0 file, 0%)';
+        
+        resultContent.insertBefore(progressDiv, resultContent.querySelector('button'));
+        
+        // Disable close button sampai upload selesai
+        const closeBtn = resultContent.querySelector('button');
+        if (closeBtn) {
+            closeBtn.disabled = true;
+            closeBtn.style.opacity = '0.5';
+            closeBtn.style.cursor = 'not-allowed';
+            closeBtn.textContent = 'Menunggu file upload...';
+            Logger.log('Close button disabled until upload completes');
+        }
+        
+        // Start polling
+        startUploadPolling(details.nomorPeserta);
+    }
+    
     modal.classList.add('show');
 }
 
@@ -1474,20 +1587,20 @@ function closeResultModal() {
     
     Logger.log('closeResultModal - lastRegistrationWasSuccessful: ' + lastRegistrationWasSuccessful);
     
+    // Stop polling jika ada
+    stopUploadPolling();
+    
     resultModal.classList.remove('show');
     
-    // ===== HANYA CLEAR JIKA BERHASIL =====
     if (lastRegistrationWasSuccessful === true) {
         Logger.log('✅ Registration SUCCESSFUL - CLEARING form');
         
-        // Clear form fields
         const registrationForm = document.getElementById('registrationForm');
         if (registrationForm) {
             registrationForm.reset();
             Logger.log('Form reset executed');
         }
         
-        // Clear file input values
         Logger.log('Clearing personal file inputs...');
         for (let i = 1; i <= 5; i++) {
             const personalInput = document.getElementById(`personalDoc${i}`);
@@ -1510,13 +1623,11 @@ function closeResultModal() {
         }
         Logger.log('All team files cleared');
         
-        // Clear variables
         uploadedFiles = {};
         savedPersonalData = null;
         savedTeamData = {};
         Logger.log('Cleared: uploadedFiles, savedPersonalData, savedTeamData');
         
-        // Reset display
         document.getElementById('cabang').value = '';
         document.getElementById('kecamatan').value = '';
         document.getElementById('umur').value = '';
@@ -1535,7 +1646,6 @@ function closeResultModal() {
         currentCabang = null;
         currentTeamMemberCount = 2;
         
-        // RESET FLAG
         lastRegistrationWasSuccessful = false;
         
         Logger.log('✅ Form cleared successfully');
