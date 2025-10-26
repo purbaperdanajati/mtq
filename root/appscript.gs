@@ -2,18 +2,18 @@
 const SHEET_ID = '1OO7VUbHhUbsqHc_EbGQVaG2Jq6EkIaTLIbLsmFnAb94';
 const FOLDER_ID = '1FHpgcmKbMrN84R29ZaVvHpNlh-AvA7_y';
 const SHEET_NAME = 'Peserta';
-const QUEUE_SHEET_NAME = 'Upload Queue';
 
 // REGISTRATION TIME WINDOW (WIB = UTC+7)
 const REGISTRATION_START = new Date('2025-10-22T00:00:00+07:00');
 const REGISTRATION_END = new Date('2025-10-30T23:59:59+07:00');
 
-// ===== LIGHTNING-FAST CONCURRENCY =====
-// Strategi: SIMPAN DATA DULU (1-2 detik), UPLOAD FILE ASYNC NANTI
-const LOCK_TIMEOUT_MS = 10000;
-const LOCK_WAIT_TIME_MS = 50;
-const MAX_LOCK_ATTEMPTS = 200;
+// ===== CONCURRENCY PROTECTION - OPTIMIZED =====
+const LOCK_TIMEOUT_MS = 45000;      // 45 detik (lebih pendek)
+const LOCK_WAIT_TIME_MS = 150;      // 150ms retry interval
+const MAX_LOCK_ATTEMPTS = 300;      // Total: 45 detik / 150ms = 300 attempts
+const DUPLICATE_CHECK_TIMEOUT_MS = 30000;
 
+// MAX PARTICIPANTS PER BRANCH
 const MAX_PARTICIPANTS_PER_BRANCH = 62;
 
 // ===== CABANG ORDER =====
@@ -40,133 +40,168 @@ const CABANG_ORDER = {
   'KTIQ': { start: 1, end: 62, name: 'KTIQ', prefix: 'M' }
 };
 
-// ===== LIGHTNING: MINIMAL LOCK - HANYA SAVE DATA =====
+// ===== HELPER: ACQUIRE LOCK DENGAN RETRY =====
+function acquireLockWithRetry(lock, timeoutMs, waitMs, maxAttempts) {
+  let attempts = 0;
+  const startTime = new Date().getTime();
+  
+  while (attempts < maxAttempts) {
+    try {
+      if (lock.tryLock(timeoutMs)) {
+        Logger.log(`✓ Lock acquired on attempt ${attempts + 1}/${maxAttempts}`);
+        return true;
+      }
+    } catch (e) {
+      Logger.log(`Lock attempt ${attempts + 1} error: ${e.message}`);
+    }
+    
+    attempts++;
+    const elapsedMs = new Date().getTime() - startTime;
+    
+    if (elapsedMs + waitMs > timeoutMs) {
+      Logger.log(`✗ Lock timeout exceeded (${elapsedMs}ms)`);
+      break;
+    }
+    
+    Utilities.sleep(waitMs);
+  }
+  
+  Logger.log(`✗ Could not acquire lock after ${attempts} attempts (${new Date().getTime() - startTime}ms)`);
+  return false;
+}
+
+// ===== MAIN FUNCTION - OPTIMIZED FLOW =====
 function doPost(e) {
   const lock = LockService.getScriptLock();
   let lockAcquired = false;
-  const startTime = new Date().getTime();
   
   try {
-    Logger.log('=== START doPost (LIGHTNING MODE) ===');
+    Logger.log('=== START doPost (OPTIMIZED) ===');
+    Logger.log('Request received at: ' + new Date().toISOString());
     
-    // Handle non-registration actions
-    if (e.parameter.action === 'updateRow') {
-      return updateCompleteRow(e);
-    }
+    // Check action untuk update/delete
     if (e.parameter.action === 'updateStatus') {
       return updateRowStatus(parseInt(e.parameter.rowIndex), e.parameter.status, e.parameter.reason || '');
     }
+    
     if (e.parameter.action === 'deleteRow') {
       return deleteRowData(parseInt(e.parameter.rowIndex));
     }
     
-    // ===== TIME CHECK (NO LOCK) =====
+    // ===== STEP 0: VALIDATE REGISTRATION TIME (TANPA LOCK) =====
+    Logger.log('STEP 0: Validating registration time...');
     const now = new Date();
     if (now < REGISTRATION_START || now > REGISTRATION_END) {
-      return createResponse(false, 'Pendaftaran hanya dapat dilakukan antara tanggal 29-30 Oktober 2025.');
+      Logger.log('ERROR: Registration outside time window');
+      return createResponse(false, 'Pendaftaran hanya dapat dilakukan antara tanggal 29-30 Oktober 2025. Saat ini waktu pendaftaran telah ditutup atau belum dimulai.');
     }
+    Logger.log('✓ Registration time valid');
     
     const formData = e.parameter;
+    Logger.log('Form data received: ' + JSON.stringify(Object.keys(formData)));
+    
+    // Validasi data dasar
     if (!formData.cabang || !formData.kecamatan) {
+      Logger.log('ERROR: Missing cabang or kecamatan');
       return createResponse(false, 'Data cabang atau kecamatan tidak lengkap');
     }
     
-    // ===== ACQUIRE LOCK - CEPAT =====
-    Logger.log('Acquiring lock for registration...');
+    // ===== STEP 1: ACQUIRE LOCK UNTUK VALIDASI DUPLIKAT & NOMOR PESERTA =====
+    Logger.log('STEP 1: Acquiring lock for duplicate check and nomor peserta generation...');
     lockAcquired = acquireLockWithRetry(lock, LOCK_TIMEOUT_MS, LOCK_WAIT_TIME_MS, MAX_LOCK_ATTEMPTS);
     
     if (!lockAcquired) {
-      return createResponse(false, 'Server sedang sibuk. Mohon coba lagi dalam beberapa detik.');
+      Logger.log('ERROR: Could not acquire lock');
+      return createResponse(false, 'Server sedang sibuk menangani registrasi. Mohon coba lagi dalam beberapa detik.');
     }
+    Logger.log('✓ Lock acquired successfully');
     
-    Logger.log('✓ Lock acquired');
-    
-    // ===== OPEN SHEET & DUPLICATE CHECK (DALAM LOCK) =====
+    // Buka spreadsheet
     const ss = SpreadsheetApp.openById(SHEET_ID);
     let sheet = ss.getSheetByName(SHEET_NAME);
     
     if (!sheet) {
+      Logger.log('Creating new sheet: ' + SHEET_NAME);
       sheet = ss.insertSheet(SHEET_NAME);
     }
     
     if (sheet.getLastRow() === 0) {
+      Logger.log('Adding headers to sheet');
       addHeaders(sheet);
     }
     
-    // Quick duplicate check
+    // ===== CHECK DUPLICATES =====
+    Logger.log('STEP 1A: Checking for duplicate NIK...');
     const nikList = formData.nikList ? JSON.parse(formData.nikList) : [];
-    const duplicateCheck = checkDuplicates(sheet, nikList);
     
+    const duplicateCheck = checkDuplicates(sheet, nikList);
     if (!duplicateCheck.isValid) {
+      Logger.log('Duplicate found: ' + duplicateCheck.message);
       lock.releaseLock();
       lockAcquired = false;
       return createResponse(false, duplicateCheck.message);
     }
+    Logger.log('✓ No duplicates found');
     
-    Logger.log('✓ No duplicates');
-    
-    // ===== GENERATE NOMOR PESERTA (DALAM LOCK) =====
-    Logger.log('Generating nomor peserta...');
+    // ===== GENERATE NOMOR PESERTA =====
+    Logger.log('STEP 1B: Generating nomor peserta...');
     const isTeam = formData.isTeam === 'true';
     const nomorPeserta = generateNomorPeserta(sheet, formData.cabangCode, formData.genderCode || formData.memberGenderCode1, isTeam);
     if (!nomorPeserta.success) {
+      Logger.log('Failed to generate nomor peserta: ' + nomorPeserta.message);
       lock.releaseLock();
       lockAcquired = false;
-      Logger.log('Failed to generate nomor peserta: ' + nomorPeserta.message);
       return createResponse(false, nomorPeserta.message);
     }
     Logger.log('✓ Nomor peserta generated: ' + nomorPeserta.number);
     
-    // ===== PREPARE & SAVE ROW (SUPER CEPAT - TANPA FILE) =====
-    Logger.log('Saving registration data...');
+    // ===== STEP 2: PREPARE & APPEND DATA KE SHEET (MASIH DALAM LOCK) =====
+    Logger.log('STEP 2: Preparing and appending data to sheet...');
     const rowData = prepareRowData(formData, {}, sheet, nomorPeserta.number);
     sheet.appendRow(rowData);
-    const newRowIndex = sheet.getLastRow();
+    const savedRowIndex = sheet.getLastRow();
+    Logger.log('✓ Data appended to row: ' + savedRowIndex);
     
-    Logger.log('✓ Data saved to row ' + newRowIndex);
-    
-    // ===== RELEASE LOCK IMMEDIATELY =====
-    const lockDuration = new Date().getTime() - startTime;
+    // ===== STEP 3: RELEASE LOCK (DATA SUDAH TERSIMPAN) =====
+    Logger.log('STEP 3: Releasing lock...');
     lock.releaseLock();
     lockAcquired = false;
-    Logger.log(`✓ Lock released (${lockDuration}ms)`);
+    Logger.log('✓ Lock released - registration data saved');
     
-    // ===== PROCESS FILE UPLOADS AFTER LOCK (ASYNC) =====
-    Logger.log('Processing file uploads...');
-    try {
-      const fileLinks = processFileUploads(e, formData, nomorPeserta.number);
-      Logger.log('✓ Files processed: ' + Object.keys(fileLinks).length);
-      
-      // Update file links ke sheet
-      if (Object.keys(fileLinks).length > 0) {
-        Logger.log('Updating file links...');
-        updateFileLinksInSheet(sheet, newRowIndex, fileLinks);
-        Logger.log('✓ File links updated');
-      }
-    } catch (uploadError) {
-      Logger.log('⚠️ File upload error (non-blocking): ' + uploadError.message);
-      // Jangan fail - data sudah tersimpan
+    // ===== STEP 4: PROCESS FILE UPLOADS (TANPA LOCK) =====
+    Logger.log('STEP 4: Processing file uploads (WITHOUT lock)...');
+    const fileLinks = processFileUploads(e, formData, nomorPeserta.number);
+    Logger.log('✓ Files processed: ' + Object.keys(fileLinks).length);
+    
+    // ===== STEP 5: UPDATE FILE LINKS KE SHEET (TANPA LOCK) =====
+    if (Object.keys(fileLinks).length > 0) {
+      Logger.log('STEP 5: Updating file links in sheet...');
+      updateFileLinksInSheet(sheet, savedRowIndex, fileLinks);
+      Logger.log('✓ File links updated');
     }
     
-    const totalTime = new Date().getTime() - startTime;
-    Logger.log(`=== END doPost SUCCESS (${totalTime}ms) ===`);
+    Logger.log('=== END doPost SUCCESS ===');
     
     return createResponse(true, 'Registrasi berhasil!', nomorPeserta.number, {
       nik: formData.nik || '',
       nama: formData.nama || '',
       cabang: formData.cabang || '',
-      nomorPeserta: nomorPeserta.number,
-      timestamp: new Date().toLocaleString('id-ID')
+      nomorPeserta: nomorPeserta.number
     });
     
   } catch (error) {
-    Logger.log('ERROR: ' + error.message);
+    Logger.log('=== ERROR in doPost ===');
+    Logger.log('Error type: ' + error.name);
+    Logger.log('Error message: ' + error.message);
+    Logger.log('Error stack: ' + error.stack);
     return createResponse(false, 'Error: ' + error.toString());
   } 
   finally {
     if (lockAcquired) {
       try {
+        Logger.log('Finally block: Releasing lock...');
         lock.releaseLock();
+        Logger.log('✓ Lock released in finally block');
       } catch (e) {
         Logger.log('Error releasing lock: ' + e.message);
       }
@@ -174,118 +209,159 @@ function doPost(e) {
   }
 }
 
-// ===== NEW: QUEUE FILE UPLOADS =====
-function queueFileUploads(rowIndex, e, formData) {
+// ===== UPDATE FILE LINKS TANPA LOCK =====
+function updateFileLinksInSheet(sheet, rowIndex, fileLinks) {
   try {
-    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
     
-    // Cek apakah queue sheet ada
-    let queueSheet = ss.getSheetByName(QUEUE_SHEET_NAME);
-    if (!queueSheet) {
-      queueSheet = ss.insertSheet(QUEUE_SHEET_NAME);
-      queueSheet.appendRow(['Row Index', 'Timestamp', 'Status', 'Attempt Count']);
+    const linkMappings = {
+      'doc1': 'Link - Doc Surat Mandat Personal',
+      'doc2': 'Link - Doc KTP Personal',
+      'doc3': 'Link - Doc Sertifikat Personal',
+      'doc4': 'Link - Doc Rekening Personal',
+      'doc5': 'Link - Doc Pas Photo Personal',
+      'teamDoc1_1': 'Link - Doc Surat Mandat Team 1',
+      'teamDoc1_2': 'Link - Doc KTP Team 1',
+      'teamDoc1_3': 'Link - Doc Sertifikat Team 1',
+      'teamDoc1_4': 'Link - Doc Rekening Team 1',
+      'teamDoc1_5': 'Link - Doc Pas Photo Team 1',
+      'teamDoc2_1': 'Link - Doc Surat Mandat Team 2',
+      'teamDoc2_2': 'Link - Doc KTP Team 2',
+      'teamDoc2_3': 'Link - Doc Sertifikat Team 2',
+      'teamDoc2_4': 'Link - Doc Rekening Team 2',
+      'teamDoc2_5': 'Link - Doc Pas Photo Team 2',
+      'teamDoc3_1': 'Link - Doc Surat Mandat Team 3',
+      'teamDoc3_2': 'Link - Doc KTP Team 3',
+      'teamDoc3_3': 'Link - Doc Sertifikat Team 3',
+      'teamDoc3_4': 'Link - Doc Rekening Team 3',
+      'teamDoc3_5': 'Link - Doc Pas Photo Team 3'
+    };
+    
+    for (let fileKey in fileLinks) {
+      const headerName = linkMappings[fileKey];
+      const colIndex = headers.indexOf(headerName);
+      
+      if (colIndex !== -1) {
+        sheet.getRange(rowIndex, colIndex + 1).setValue(fileLinks[fileKey]);
+        Logger.log(`Updated ${fileKey} at row ${rowIndex}, col ${colIndex + 1}`);
+      }
     }
-    
-    // Tambahkan ke queue
-    queueSheet.appendRow([
-      rowIndex,
-      new Date().toISOString(),
-      'pending',
-      0
-    ]);
-    
-    Logger.log('Added row ' + rowIndex + ' to upload queue');
-    
   } catch (error) {
-    Logger.log('Error queueing uploads: ' + error.message);
+    Logger.log('Error updating file links: ' + error.message);
   }
 }
 
-// ===== BACKGROUND PROCESSOR (JALANKAN DARI TRIGGER) =====
-function processUploadQueue() {
-  Logger.log('=== START processUploadQueue ===');
-  
+// ===== HELPER FUNCTIONS (SAMA SEPERTI SEBELUMNYA) =====
+
+function generateNomorPeserta(sheet, cabangCode, genderCode, isTeam) {
   try {
-    const ss = SpreadsheetApp.openById(SHEET_ID);
-    const queueSheet = ss.getSheetByName(QUEUE_SHEET_NAME);
+    Logger.log('[LOCK] Generating nomor peserta for cabang: ' + cabangCode);
     
-    if (!queueSheet) {
-      Logger.log('Queue sheet tidak ditemukan');
-      return;
+    const cabangInfo = CABANG_ORDER[cabangCode];
+    if (!cabangInfo) {
+      return { success: false, message: 'Kode cabang tidak valid' };
     }
     
-    const queueData = queueSheet.getRange(2, 1, queueSheet.getLastRow() - 1, 4).getValues();
+    const lastRow = sheet.getLastRow();
+    const existingNumbers = [];
     
-    if (queueData.length === 0) {
-      Logger.log('Queue kosong');
-      return;
-    }
-    
-    Logger.log('Processing ' + queueData.length + ' items in queue');
-    
-    for (let i = 0; i < queueData.length; i++) {
-      const rowIndex = queueData[i][0];
-      const status = queueData[i][2];
-      const attemptCount = queueData[i][3];
+    if (lastRow > 1) {
+      Logger.log('[LOCK] Reading existing numbers from rows 2 to ' + lastRow);
+      const dataRange = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn());
+      const data = dataRange.getValues();
+      const nomorPesertaCol = 1;
       
-      if (status === 'completed') {
-        continue;
-      }
-      
-      if (attemptCount > 3) {
-        queueSheet.getRange(i + 2, 3).setValue('failed');
-        continue;
-      }
-      
-      try {
-        Logger.log('Processing row ' + rowIndex);
-        queueSheet.getRange(i + 2, 3).setValue('completed');
-        queueSheet.getRange(i + 2, 4).setValue(attemptCount + 1);
-        
-      } catch (error) {
-        Logger.log('Error processing row ' + rowIndex + ': ' + error.message);
-        queueSheet.getRange(i + 2, 4).setValue(attemptCount + 1);
+      for (let i = 0; i < data.length; i++) {
+        const nomorPeserta = data[i][nomorPesertaCol];
+        if (nomorPeserta) {
+          const nomorStr = nomorPeserta.toString();
+          let num;
+          
+          if (cabangInfo.prefix) {
+            const prefixMatch = nomorStr.match(new RegExp('^' + cabangInfo.prefix + '\\.\\s*(\\d+)$'));
+            if (prefixMatch) {
+              num = parseInt(prefixMatch[1]);
+              if (!isNaN(num)) {
+                existingNumbers.push(num);
+              }
+            }
+          } else {
+            num = parseInt(nomorStr);
+            if (!isNaN(num) && num >= cabangInfo.start && num <= cabangInfo.end) {
+              existingNumbers.push(num);
+            }
+          }
+        }
       }
     }
     
-    Logger.log('=== END processUploadQueue ===');
+    Logger.log('[LOCK] Found ' + existingNumbers.length + ' existing numbers');
+    
+    let isOdd;
+    if (genderCode === 'female' || genderCode === 'perempuan') {
+      isOdd = true;
+    } else {
+      isOdd = false;
+    }
+    
+    Logger.log('[LOCK] Gender: ' + genderCode + ', isOdd: ' + isOdd);
+    
+    let nextNumber;
+    
+    if (isOdd) {
+      nextNumber = cabangInfo.start % 2 === 0 ? cabangInfo.start + 1 : cabangInfo.start;
+    } else {
+      nextNumber = cabangInfo.start % 2 === 0 ? cabangInfo.start : cabangInfo.start + 1;
+    }
+
+    let attempts = 0;
+    const maxAttempts = (cabangInfo.end - cabangInfo.start) / 2 + 1;
+    
+    while (existingNumbers.indexOf(nextNumber) !== -1) {
+      nextNumber += 2;
+      attempts++;
+      
+      if (attempts > maxAttempts || nextNumber > cabangInfo.end) {
+        Logger.log('[LOCK] ERROR: Kuota penuh setelah ' + attempts + ' attempts');
+        return {
+          success: false,
+          message: 'Maaf, kuota peserta untuk cabang ' + cabangInfo.name + ' (' + (isOdd ? 'Putri' : 'Putra') + ') sudah penuh.'
+        };
+      }
+    }
+    
+    let nomorPeserta;
+    if (cabangInfo.prefix) {
+      nomorPeserta = cabangInfo.prefix + '. ' + String(nextNumber).padStart(2, '0');
+    } else {
+      nomorPeserta = String(nextNumber).padStart(3, '0');
+    }
+    
+    Logger.log('[LOCK] ✓ Generated nomor peserta: ' + nomorPeserta);
+    
+    return { success: true, number: nomorPeserta };
     
   } catch (error) {
-    Logger.log('Error in processUploadQueue: ' + error.message);
+    Logger.log('[LOCK] Error in generateNomorPeserta: ' + error.message);
+    return { success: false, message: 'Terjadi kesalahan saat membuat nomor peserta. Silakan coba lagi.' };
   }
-}
-
-// ===== HELPER FUNCTIONS =====
-
-function acquireLockWithRetry(lock, timeoutMs, waitMs, maxAttempts) {
-  let attempts = 0;
-  
-  while (attempts < maxAttempts) {
-    try {
-      if (lock.tryLock(timeoutMs)) {
-        Logger.log(`✓ Lock acquired (attempt ${attempts + 1})`);
-        return true;
-      }
-    } catch (e) {
-      // Silent fail
-    }
-    
-    attempts++;
-    Utilities.sleep(waitMs);
-  }
-  
-  Logger.log(`✗ Lock failed after ${attempts} attempts`);
-  return false;
 }
 
 function checkDuplicates(sheet, nikList) {
   try {
     const lastRow = sheet.getLastRow();
-    if (lastRow <= 1) return { isValid: true };
+    if (lastRow <= 1) {
+      Logger.log('No existing data, duplicate check passed');
+      return { isValid: true };
+    }
     
     const dataRange = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn());
     const data = dataRange.getValues();
     
+    Logger.log('Checking against ' + data.length + ' existing registrations');
+    
+    const kecamatanCol = 3;
+    const cabangCol = 4;
     const nikCol = 7;
     const member1NikCol = 19;
     const member2NikCol = 31;
@@ -293,6 +369,9 @@ function checkDuplicates(sheet, nikList) {
     
     for (let i = 0; i < data.length; i++) {
       const row = data[i];
+      const rowKecamatan = row[kecamatanCol];
+      const rowCabang = row[cabangCol];
+      
       const existingNiks = [
         row[nikCol],
         row[member1NikCol],
@@ -302,22 +381,30 @@ function checkDuplicates(sheet, nikList) {
       
       for (let newNik of nikList) {
         if (newNik && newNik.trim() !== '') {
+          const trimmedNewNik = newNik.trim();
+          
           for (let existingNik of existingNiks) {
-            if (existingNik.toString().trim() === newNik.trim()) {
-              return {
-                isValid: false,
-                message: `NIK ${newNik.trim()} sudah terdaftar. Setiap peserta hanya boleh mendaftar satu kali.`
-              };
+            const trimmedExistingNik = existingNik.toString().trim();
+            
+            if (trimmedExistingNik === trimmedNewNik) {
+              const message = `NIK ${trimmedNewNik} sudah terdaftar di Kecamatan "${rowKecamatan}", Cabang "${rowCabang}". Setiap peserta hanya boleh mendaftar satu kali di seluruh cabang lomba.`;
+              Logger.log('DUPLICATE NIK FOUND: ' + message);
+              return { isValid: false, message: message };
             }
           }
         }
       }
     }
     
+    Logger.log('No duplicates found - validation passed');
     return { isValid: true };
+    
   } catch (error) {
     Logger.log('Error in checkDuplicates: ' + error.message);
-    return { isValid: false, message: 'Error saat validasi data.' };
+    return { 
+      isValid: false, 
+      message: 'Terjadi kesalahan saat validasi data. Silakan coba lagi atau hubungi admin.' 
+    };
   }
 }
 
@@ -326,8 +413,14 @@ function createResponse(success, message, nomorPeserta, details) {
     success: success,
     message: message
   };
-  if (nomorPeserta) response.nomorPeserta = nomorPeserta;
-  if (details) response.details = details;
+  
+  if (nomorPeserta) {
+    response.nomorPeserta = nomorPeserta;
+  }
+  
+  if (details) {
+    response.details = details;
+  }
   
   return ContentService.createTextOutput(JSON.stringify(response))
     .setMimeType(ContentService.MimeType.JSON);
@@ -361,12 +454,62 @@ function addHeaders(sheet) {
   sheet.appendRow(headers);
 }
 
+function processFileUploads(e, formData, nomorPeserta) {
+  const fileLinks = {};
+  const folder = DriveApp.getFolderById(FOLDER_ID);
+  const timestamp = new Date().getTime();
+  
+  try {
+    const allBlobs = e.parameters || e.parameter;
+    Logger.log('Processing file blobs: ' + JSON.stringify(Object.keys(allBlobs)));
+    
+    for (let key in allBlobs) {
+      if (key.endsWith('_type') || key.endsWith('_name') || key === 'action' || key === 'nomorPeserta' || key === 'updatedData' || key === 'rowIndex') {
+        continue;
+      }
+      
+      if (key.startsWith('doc') || key.startsWith('teamDoc') || key.startsWith('Link')) {
+        try {
+          const base64Data = Array.isArray(allBlobs[key]) ? allBlobs[key][0] : allBlobs[key];
+          if (base64Data && base64Data.length > 0) {
+            const originalName = allBlobs[key + '_name'] ? (Array.isArray(allBlobs[key + '_name']) ? allBlobs[key + '_name'][0] : allBlobs[key + '_name']) : key;
+            const mimeType = allBlobs[key + '_type'] ? (Array.isArray(allBlobs[key + '_type']) ? allBlobs[key + '_type'][0] : allBlobs[key + '_type']) : 'application/octet-stream';
+            
+            const lastDotIndex = originalName.lastIndexOf('.');
+            const extension = lastDotIndex > -1 ? originalName.substring(lastDotIndex) : '';
+            
+            const uniqueFileName = nomorPeserta + '_' + key + '_' + timestamp + extension;
+            
+            const blob = Utilities.newBlob(
+              Utilities.base64Decode(base64Data),
+              mimeType,
+              uniqueFileName
+            );
+            
+            const file = folder.createFile(blob);
+            file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+            fileLinks[key] = file.getUrl();
+            Logger.log('Uploaded file: ' + key + ' -> ' + uniqueFileName);
+          }
+        } catch (fileError) {
+          Logger.log('Error uploading file ' + key + ': ' + fileError.message);
+        }
+      }
+    }
+    
+  } catch (error) {
+    Logger.log('Upload error: ' + error.message);
+  }
+  
+  return fileLinks;
+}
+
 function prepareRowData(formData, fileLinks, sheet, nomorPeserta) {
   const no = sheet.getLastRow();
   const timestamp = new Date().toLocaleString('id-ID');
   
   const rowData = [
-    no, nomorPeserta || '', timestamp, formData.kecamatan || '', formData.cabang || '',
+    no, nomorPeserta, timestamp, formData.kecamatan || '', formData.cabang || '',
     formData.maxAge || '', formData.namaRegu || '-', formData.nik || '', formData.nama || '',
     formData.jenisKelamin || '', formData.tempatLahir || '', formData.tglLahir || '',
     formData.umur || '', formData.alamat || '', formData.noTelepon || '', formData.email || '',
@@ -394,209 +537,41 @@ function prepareRowData(formData, fileLinks, sheet, nomorPeserta) {
   return rowData;
 }
 
-// Stubs untuk doGet dan functions lainnya
-function doGet(e) {
-  const action = e.parameter.action;
-  
-  if (action === 'checkUploadStatus') {
-    return checkUploadStatus(e);
-  } else if (action === 'getData') {
-    return getAllDataAsJSON();
-  } else if (action === 'getRejectedData') {
-    return getRejectedDataAsJSON();
-  }
-  
-  return ContentService.createTextOutput(JSON.stringify({
-    success: false,
-    message: 'Invalid action'
-  })).setMimeType(ContentService.MimeType.JSON);
-}
-
-// ===== NEW: CHECK UPLOAD STATUS =====
-function checkUploadStatus(e) {
+function updateRowStatus(rowIndex, newStatus, reason) {
   try {
-    const nomorPeserta = e.parameter.nomorPeserta;
-    Logger.log('Checking upload status for: ' + nomorPeserta);
+    Logger.log('Updating row ' + rowIndex + ' status to ' + newStatus + ' with reason: ' + reason);
     
     const ss = SpreadsheetApp.openById(SHEET_ID);
     const sheet = ss.getSheetByName(SHEET_NAME);
     
     if (!sheet) {
       return ContentService.createTextOutput(JSON.stringify({
-        uploadComplete: true,
-        filesUploaded: 0,
-        totalFiles: 0,
+        success: false,
         message: 'Sheet tidak ditemukan'
       })).setMimeType(ContentService.MimeType.JSON);
     }
-    
-    // Cari row dengan nomor peserta ini
-    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-    const nomorPesertaIdx = headers.indexOf('Nomor Peserta');
-    
-    if (nomorPesertaIdx === -1) {
-      return ContentService.createTextOutput(JSON.stringify({
-        uploadComplete: true,
-        filesUploaded: 0,
-        totalFiles: 0
-      })).setMimeType(ContentService.MimeType.JSON);
-    }
-    
-    const lastRow = sheet.getLastRow();
-    let rowIndex = -1;
-    
-    for (let i = 2; i <= lastRow; i++) {
-      const cellValue = sheet.getRange(i, nomorPesertaIdx + 1).getValue();
-      if (cellValue.toString() === nomorPeserta.toString()) {
-        rowIndex = i;
-        break;
-      }
-    }
-    
-    if (rowIndex === -1) {
-      Logger.log('Row not found for: ' + nomorPeserta);
-      return ContentService.createTextOutput(JSON.stringify({
-        uploadComplete: false,
-        filesUploaded: 0,
-        totalFiles: 20 // Estimasi
-      })).setMimeType(ContentService.MimeType.JSON);
-    }
-    
-    // Count uploaded files (non-empty links)
-    const linkColumns = [
-      'Link - Doc Surat Mandat Personal',
-      'Link - Doc KTP Personal',
-      'Link - Doc Sertifikat Personal',
-      'Link - Doc Rekening Personal',
-      'Link - Doc Pas Photo Personal',
-      'Link - Doc Surat Mandat Team 1',
-      'Link - Doc KTP Team 1',
-      'Link - Doc Sertifikat Team 1',
-      'Link - Doc Rekening Team 1',
-      'Link - Doc Pas Photo Team 1',
-      'Link - Doc Surat Mandat Team 2',
-      'Link - Doc KTP Team 2',
-      'Link - Doc Sertifikat Team 2',
-      'Link - Doc Rekening Team 2',
-      'Link - Doc Pas Photo Team 2',
-      'Link - Doc Surat Mandat Team 3',
-      'Link - Doc KTP Team 3',
-      'Link - Doc Sertifikat Team 3',
-      'Link - Doc Rekening Team 3',
-      'Link - Doc Pas Photo Team 3'
-    ];
-    
-    let filesUploaded = 0;
-    
-    for (let colName of linkColumns) {
-      const colIdx = headers.indexOf(colName);
-      if (colIdx !== -1) {
-        const cellValue = sheet.getRange(rowIndex, colIdx + 1).getValue();
-        if (cellValue && cellValue.toString().includes('drive.google.com')) {
-          filesUploaded++;
-        }
-      }
-    }
-    
-    const uploadComplete = filesUploaded === linkColumns.length;
-    
-    Logger.log(`Upload status: ${filesUploaded}/${linkColumns.length} files`);
-    
-    return ContentService.createTextOutput(JSON.stringify({
-      uploadComplete: uploadComplete,
-      filesUploaded: filesUploaded,
-      totalFiles: linkColumns.length,
-      nomorPeserta: nomorPeserta
-    })).setMimeType(ContentService.MimeType.JSON);
-    
-  } catch (error) {
-    Logger.log('Error in checkUploadStatus: ' + error.message);
-    return ContentService.createTextOutput(JSON.stringify({
-      uploadComplete: true,
-      filesUploaded: 0,
-      totalFiles: 0,
-      error: error.message
-    })).setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-function getAllDataAsJSON() {
-  try {
-    const ss = SpreadsheetApp.openById(SHEET_ID);
-    const sheet = ss.getSheetByName(SHEET_NAME);
-    
-    if (!sheet || sheet.getLastRow() <= 1) {
-      return ContentService.createTextOutput(JSON.stringify({
-        success: true,
-        headers: [],
-        data: []
-      })).setMimeType(ContentService.MimeType.JSON);
-    }
-    
-    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-    const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).getValues();
-    
-    return ContentService.createTextOutput(JSON.stringify({
-      success: true,
-      headers: headers,
-      data: data,
-      totalRows: data.length
-    })).setMimeType(ContentService.MimeType.JSON);
-      
-  } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({
-      success: false,
-      message: 'Error: ' + error.toString()
-    })).setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-function getRejectedDataAsJSON() {
-  try {
-    const ss = SpreadsheetApp.openById(SHEET_ID);
-    const sheet = ss.getSheetByName(SHEET_NAME);
-    
-    if (!sheet || sheet.getLastRow() <= 1) {
-      return ContentService.createTextOutput(JSON.stringify({
-        success: true,
-        data: []
-      })).setMimeType(ContentService.MimeType.JSON);
-    }
-    
-    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-    const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).getValues();
-    
-    const statusIdx = headers.indexOf('Status');
-    const rejectedData = data.filter(row => row[statusIdx] === 'Ditolak');
-    
-    return ContentService.createTextOutput(JSON.stringify({
-      success: true,
-      data: rejectedData,
-      totalRows: rejectedData.length
-    })).setMimeType(ContentService.MimeType.JSON);
-      
-  } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({
-      success: false,
-      message: 'Error: ' + error.toString()
-    })).setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-function updateRowStatus(rowIndex, newStatus, reason) {
-  try {
-    const ss = SpreadsheetApp.openById(SHEET_ID);
-    const sheet = ss.getSheetByName(SHEET_NAME);
     
     const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
     const statusIdx = headers.indexOf('Status');
     const alasanIdx = headers.indexOf('Alasan Ditolak');
     const actualRow = rowIndex + 2;
     
+    if (actualRow > sheet.getLastRow()) {
+      return ContentService.createTextOutput(JSON.stringify({
+        success: false,
+        message: 'Row tidak ditemukan'
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
     sheet.getRange(actualRow, statusIdx + 1).setValue(newStatus);
+    
     if (newStatus === 'Ditolak' && alasanIdx !== -1) {
       sheet.getRange(actualRow, alasanIdx + 1).setValue(reason || '-');
+    } else if (alasanIdx !== -1) {
+      sheet.getRange(actualRow, alasanIdx + 1).setValue('-');
     }
+    
+    Logger.log('Status updated successfully at row ' + actualRow);
     
     return ContentService.createTextOutput(JSON.stringify({
       success: true,
@@ -604,36 +579,7 @@ function updateRowStatus(rowIndex, newStatus, reason) {
     })).setMimeType(ContentService.MimeType.JSON);
     
   } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({
-      success: false,
-      message: 'Error: ' + error.toString()
-    })).setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-function updateCompleteRow(e) {
-  try {
-    const rowIndex = parseInt(e.parameter.rowIndex);
-    const updatedData = JSON.parse(e.parameter.updatedData);
-    
-    const ss = SpreadsheetApp.openById(SHEET_ID);
-    const sheet = ss.getSheetByName(SHEET_NAME);
-    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-    const actualRow = rowIndex + 2;
-    
-    for (let field in updatedData) {
-      const colIndex = headers.indexOf(field);
-      if (colIndex !== -1) {
-        sheet.getRange(actualRow, colIndex + 1).setValue(updatedData[field]);
-      }
-    }
-    
-    return ContentService.createTextOutput(JSON.stringify({
-      success: true,
-      message: 'Data berhasil diperbarui'
-    })).setMimeType(ContentService.MimeType.JSON);
-    
-  } catch (error) {
+    Logger.log('Error in updateRowStatus: ' + error.message);
     return ContentService.createTextOutput(JSON.stringify({
       success: false,
       message: 'Error: ' + error.toString()
@@ -643,11 +589,30 @@ function updateCompleteRow(e) {
 
 function deleteRowData(rowIndex) {
   try {
+    Logger.log('Deleting row ' + rowIndex);
+    
     const ss = SpreadsheetApp.openById(SHEET_ID);
     const sheet = ss.getSheetByName(SHEET_NAME);
+    
+    if (!sheet) {
+      return ContentService.createTextOutput(JSON.stringify({
+        success: false,
+        message: 'Sheet tidak ditemukan'
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
     const actualRow = rowIndex + 2;
     
+    if (actualRow > sheet.getLastRow()) {
+      return ContentService.createTextOutput(JSON.stringify({
+        success: false,
+        message: 'Row tidak ditemukan'
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
     sheet.deleteRow(actualRow);
+    
+    Logger.log('Row deleted successfully');
     
     return ContentService.createTextOutput(JSON.stringify({
       success: true,
@@ -655,115 +620,10 @@ function deleteRowData(rowIndex) {
     })).setMimeType(ContentService.MimeType.JSON);
     
   } catch (error) {
+    Logger.log('Error in deleteRowData: ' + error.message);
     return ContentService.createTextOutput(JSON.stringify({
       success: false,
       message: 'Error: ' + error.toString()
     })).setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-// ===== GENERATE NOMOR PESERTA (OPTIMIZED) =====
-function generateNomorPeserta(sheet, cabangCode, genderCode, isTeam) {
-  try {
-    Logger.log('[LOCK] Generating nomor peserta for cabang: ' + cabangCode);
-    
-    const cabangInfo = CABANG_ORDER[cabangCode];
-    if (!cabangInfo) {
-      return {
-        success: false,
-        message: 'Kode cabang tidak valid'
-      };
-    }
-    
-    const lastRow = sheet.getLastRow();
-    const existingNumbers = [];
-    
-    if (lastRow > 1) {
-      const dataRange = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn());
-      const data = dataRange.getValues();
-      const nomorPesertaCol = 1;
-      
-      for (let i = 0; i < data.length; i++) {
-        const nomorPeserta = data[i][nomorPesertaCol];
-        if (nomorPeserta) {
-          const nomorStr = nomorPeserta.toString();
-          let num;
-          
-          if (cabangInfo.prefix) {
-            const prefixMatch = nomorStr.match(new RegExp('^' + cabangInfo.prefix + '\\.\\s*(\\d+)));
-            if (prefixMatch) {
-              num = parseInt(prefixMatch[1]);
-              if (!isNaN(num)) {
-                existingNumbers.push(num);
-              }
-            }
-          } else {
-            num = parseInt(nomorStr);
-            if (!isNaN(num) && num >= cabangInfo.start && num <= cabangInfo.end) {
-              existingNumbers.push(num);
-            }
-          }
-        }
-      }
-    }
-    
-    Logger.log('[LOCK] Found ' + existingNumbers.length + ' existing numbers');
-    
-    // Determine odd/even berdasarkan gender
-    let isOdd;
-    if (genderCode === 'female' || genderCode === 'perempuan') {
-      isOdd = true;
-    } else {
-      isOdd = false;
-    }
-    
-    Logger.log('[LOCK] Gender: ' + genderCode + ', isOdd: ' + isOdd);
-    
-    // Find next available number
-    let nextNumber;
-    
-    if (isOdd) {
-      nextNumber = cabangInfo.start % 2 === 0 ? cabangInfo.start + 1 : cabangInfo.start;
-    } else {
-      nextNumber = cabangInfo.start % 2 === 0 ? cabangInfo.start : cabangInfo.start + 1;
-    }
-    
-    let attempts = 0;
-    const maxAttempts = (cabangInfo.end - cabangInfo.start) / 2 + 1;
-    
-    while (existingNumbers.indexOf(nextNumber) !== -1) {
-      nextNumber += 2;
-      attempts++;
-      
-      if (attempts > maxAttempts || nextNumber > cabangInfo.end) {
-        Logger.log('[LOCK] ERROR: Kuota penuh setelah ' + attempts + ' attempts');
-        return {
-          success: false,
-          message: 'Maaf, kuota peserta untuk cabang ' + cabangInfo.name + ' (' + (isOdd ? 'Putri' : 'Putra') + ') sudah penuh.'
-        };
-      }
-    }
-    
-    // Format nomor peserta
-    let nomorPeserta;
-    if (cabangInfo.prefix) {
-      nomorPeserta = cabangInfo.prefix + '. ' + String(nextNumber).padStart(2, '0');
-    } else {
-      nomorPeserta = String(nextNumber).padStart(3, '0');
-    }
-    
-    Logger.log('[LOCK] ✓ Generated nomor peserta: ' + nomorPeserta);
-    
-    return {
-      success: true,
-      number: nomorPeserta
-    };
-    
-  } catch (error) {
-    Logger.log('[LOCK] Error in generateNomorPeserta: ' + error.message);
-    return {
-      success: false,
-      message: 'Terjadi kesalahan saat membuat nomor peserta. Silakan coba lagi.'
-    };
   }
 }
