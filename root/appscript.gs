@@ -76,19 +76,28 @@ function doPost(e) {
   let lockAcquired = false;
   
   try {
-    Logger.log('=== START doPost (OPTIMIZED) ===');
+    Logger.log('=== START doPost ===');
     Logger.log('Request received at: ' + new Date().toISOString());
+    Logger.log('Action: ' + e.parameter.action);
     
-    // Check action untuk update/delete
+    // ===== HANDLE UPLOAD FILES ACTION =====
+    if (e.parameter.action === 'uploadFiles') {
+      Logger.log('UPLOAD FILES ACTION detected');
+      return handleFileUploadOnly(e);
+    }
+    
+    // ===== HANDLE UPDATE STATUS ACTION =====
     if (e.parameter.action === 'updateStatus') {
       return updateRowStatus(parseInt(e.parameter.rowIndex), e.parameter.status, e.parameter.reason || '');
     }
     
+    // ===== HANDLE DELETE ROW ACTION =====
     if (e.parameter.action === 'deleteRow') {
       return deleteRowData(parseInt(e.parameter.rowIndex));
     }
     
-    // ===== STEP 0: VALIDATE REGISTRATION TIME (TANPA LOCK) =====
+    // ===== MAIN REGISTRATION FLOW =====
+    // STEP 0: VALIDATE REGISTRATION TIME (TANPA LOCK)
     Logger.log('STEP 0: Validating registration time...');
     const now = new Date();
     if (now < REGISTRATION_START || now > REGISTRATION_END) {
@@ -168,18 +177,6 @@ function doPost(e) {
     lockAcquired = false;
     Logger.log('✓ Lock released - registration data saved');
     
-    // ===== STEP 4: PROCESS FILE UPLOADS (TANPA LOCK) =====
-    Logger.log('STEP 4: Processing file uploads (WITHOUT lock)...');
-    const fileLinks = processFileUploads(e, formData, nomorPeserta.number);
-    Logger.log('✓ Files processed: ' + Object.keys(fileLinks).length);
-    
-    // ===== STEP 5: UPDATE FILE LINKS KE SHEET (TANPA LOCK) =====
-    if (Object.keys(fileLinks).length > 0) {
-      Logger.log('STEP 5: Updating file links in sheet...');
-      updateFileLinksInSheet(sheet, savedRowIndex, fileLinks);
-      Logger.log('✓ File links updated');
-    }
-    
     Logger.log('=== END doPost SUCCESS ===');
     
     return createResponse(true, 'Registrasi berhasil!', nomorPeserta.number, {
@@ -209,11 +206,110 @@ function doPost(e) {
   }
 }
 
+function handleFileUploadOnly(e) {
+  try {
+    Logger.log('=== HANDLE FILE UPLOAD START ===');
+    
+    const nomorPeserta = e.parameter.nomorPeserta;
+    Logger.log('Nomor Peserta received: ' + nomorPeserta);
+    
+    if (!nomorPeserta) {
+      Logger.log('ERROR: nomorPeserta not provided');
+      return createResponse(false, 'Nomor peserta tidak ditemukan');
+    }
+    
+    // ===== BUKA SPREADSHEET =====
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const sheet = ss.getSheetByName(SHEET_NAME);
+    
+    if (!sheet) {
+      Logger.log('ERROR: Sheet not found');
+      return createResponse(false, 'Sheet tidak ditemukan');
+    }
+    
+    Logger.log('Sheet found: ' + SHEET_NAME);
+    
+    // ===== FIND ROW WITH NOMOR PESERTA =====
+    Logger.log('Finding row with nomor peserta: ' + nomorPeserta);
+    
+    const lastRow = sheet.getLastRow();
+    Logger.log('Total rows in sheet: ' + lastRow);
+    
+    if (lastRow <= 1) {
+      Logger.log('ERROR: No data in sheet');
+      return createResponse(false, 'Tidak ada data registrasi di sheet');
+    }
+    
+    // Get nomor peserta column (column B = index 1)
+    const nomorPesertaRange = sheet.getRange(2, 2, lastRow - 1, 1);
+    const nomorPesertaValues = nomorPesertaRange.getValues();
+    
+    Logger.log('Searching through ' + nomorPesertaValues.length + ' rows...');
+    
+    let targetRow = -1;
+    for (let i = 0; i < nomorPesertaValues.length; i++) {
+      const cellValue = nomorPesertaValues[i][0];
+      const cellStr = cellValue.toString().trim();
+      const searchStr = nomorPeserta.toString().trim();
+      
+      Logger.log(`Row ${i + 2}: "${cellStr}" vs "${searchStr}"`);
+      
+      if (cellStr === searchStr) {
+        targetRow = i + 2; // +2 karena mulai dari row 2
+        Logger.log('✓ FOUND: Target row = ' + targetRow);
+        break;
+      }
+    }
+    
+    if (targetRow === -1) {
+      Logger.log('ERROR: Row with nomor peserta "' + nomorPeserta + '" not found');
+      return createResponse(false, 'Data registrasi dengan nomor peserta ' + nomorPeserta + ' tidak ditemukan di sheet');
+    }
+    
+    Logger.log('Target row confirmed: ' + targetRow);
+    
+    // ===== PROCESS FILE UPLOADS =====
+    Logger.log('Processing file uploads...');
+    const fileLinks = processFileUploads(e, e.parameter, nomorPeserta);
+    Logger.log('✓ Files processed: ' + Object.keys(fileLinks).length);
+    
+    // ===== UPDATE FILE LINKS KE SHEET =====
+    if (Object.keys(fileLinks).length > 0) {
+      Logger.log('Updating file links in sheet at row ' + targetRow);
+      updateFileLinksInSheet(sheet, targetRow, fileLinks);
+      Logger.log('✓ File links updated');
+    } else {
+      Logger.log('WARNING: No file links to update');
+    }
+    
+    Logger.log('=== HANDLE FILE UPLOAD SUCCESS ===');
+    
+    return createResponse(true, 'File berhasil diupload', nomorPeserta, {
+      filesUploaded: Object.keys(fileLinks).length,
+      rowUpdated: targetRow
+    });
+    
+  } catch (error) {
+    Logger.log('=== ERROR in handleFileUploadOnly ===');
+    Logger.log('Error message: ' + error.message);
+    Logger.log('Error stack: ' + error.stack);
+    return createResponse(false, 'Error: ' + error.toString());
+  }
+}
+
+
 // ===== UPDATE FILE LINKS TANPA LOCK =====
 function updateFileLinksInSheet(sheet, rowIndex, fileLinks) {
   try {
-    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    Logger.log('=== UPDATE FILE LINKS START ===');
+    Logger.log('Row Index: ' + rowIndex);
+    Logger.log('File Links to update: ' + Object.keys(fileLinks).length);
     
+    // Get all headers
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    Logger.log('Total headers: ' + headers.length);
+    
+    // Create link mappings
     const linkMappings = {
       'doc1': 'Link - Doc Surat Mandat Personal',
       'doc2': 'Link - Doc KTP Personal',
@@ -237,17 +333,79 @@ function updateFileLinksInSheet(sheet, rowIndex, fileLinks) {
       'teamDoc3_5': 'Link - Doc Pas Photo Team 3'
     };
     
+    // For each file link
     for (let fileKey in fileLinks) {
       const headerName = linkMappings[fileKey];
+      
+      if (!headerName) {
+        Logger.log(`WARNING: No mapping found for fileKey: ${fileKey}`);
+        continue;
+      }
+      
+      // Find column index
       const colIndex = headers.indexOf(headerName);
       
-      if (colIndex !== -1) {
-        sheet.getRange(rowIndex, colIndex + 1).setValue(fileLinks[fileKey]);
-        Logger.log(`Updated ${fileKey} at row ${rowIndex}, col ${colIndex + 1}`);
+      if (colIndex === -1) {
+        Logger.log(`ERROR: Header "${headerName}" not found in sheet`);
+        Logger.log('Available headers: ' + headers.join(' | '));
+        continue;
       }
+      
+      Logger.log(`Found header "${headerName}" at column ${colIndex + 1}`);
+      
+      // Update cell
+      const cell = sheet.getRange(rowIndex, colIndex + 1);
+      const url = fileLinks[fileKey];
+      
+      Logger.log(`Setting ${fileKey} link: ${url}`);
+      cell.setValue(url);
+      
+      // Optional: Add hyperlink formula untuk better UX
+      // cell.setFormula(`=HYPERLINK("${url}", "📄 ${fileKey}")`);
+      
+      Logger.log(`✓ Updated ${fileKey} at row ${rowIndex}, column ${colIndex + 1}`);
     }
+    
+    Logger.log('=== UPDATE FILE LINKS SUCCESS ===');
+    
   } catch (error) {
-    Logger.log('Error updating file links: ' + error.message);
+    Logger.log('=== ERROR in updateFileLinksInSheet ===');
+    Logger.log('Error message: ' + error.message);
+    Logger.log('Error stack: ' + error.stack);
+    throw error;
+  }
+}
+
+function debugListHeaders() {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const sheet = ss.getSheetByName(SHEET_NAME);
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  
+  Logger.log('=== ALL HEADERS ===');
+  for (let i = 0; i < headers.length; i++) {
+    Logger.log(`Column ${i + 1}: "${headers[i]}"`);
+  }
+  
+  return headers;
+}
+
+function debugCheckSpreadsheetStatus() {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const sheet = ss.getSheetByName(SHEET_NAME);
+  
+  Logger.log('=== SPREADSHEET DEBUG INFO ===');
+  Logger.log('Sheet Name: ' + sheet.getName());
+  Logger.log('Last Row: ' + sheet.getLastRow());
+  Logger.log('Last Column: ' + sheet.getLastColumn());
+  
+  // Show last 5 rows nomor peserta
+  if (sheet.getLastRow() > 1) {
+    const range = sheet.getRange(Math.max(2, sheet.getLastRow() - 4), 2, 5, 1);
+    const values = range.getValues();
+    Logger.log('Last 5 nomor peserta:');
+    for (let i = 0; i < values.length; i++) {
+      Logger.log(`  Row ${Math.max(2, sheet.getLastRow() - 4) + i}: ${values[i][0]}`);
+    }
   }
 }
 
@@ -464,6 +622,7 @@ function processFileUploads(e, formData, nomorPeserta) {
     Logger.log('Processing file blobs: ' + JSON.stringify(Object.keys(allBlobs)));
     
     for (let key in allBlobs) {
+      // Skip non-file parameters
       if (key.endsWith('_type') || key.endsWith('_name') || key === 'action' || key === 'nomorPeserta' || key === 'updatedData' || key === 'rowIndex') {
         continue;
       }

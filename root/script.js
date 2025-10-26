@@ -1,6 +1,6 @@
 // script.js
 // ===== CONFIGURATION =====
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx1mROOmFepBCr3aNd_JsGAoRK-uxblCIdZPIXEq0x6WWM85AInZKNrkzhsSXGxxP8X/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz9CV-5I04A9ymVTqBtp4089SAMbOMuEN1uJsBhY3EXPzt32MYT4SSgb45QbYKgzZY/exec';
 const REGISTRATION_START = new Date('2025-10-25T09:00:00+07:00');
 const REGISTRATION_END = new Date('2025-10-30T23:59:59+07:00');
 const MAX_FILE_SIZE_MB = 5;
@@ -2051,6 +2051,11 @@ document.getElementById('registrationForm')?.addEventListener('submit', async fu
             const fileFormData = new FormData();
             const uploadedFilesList = Object.keys(uploadedFiles);
             
+            // ===== PENTING: TAMBAHKAN nomor peserta =====
+            fileFormData.append('nomorPeserta', result.nomorPeserta);
+            fileFormData.append('action', 'uploadFiles');
+            Logger.log('Added nomorPeserta: ' + result.nomorPeserta);
+            
             for (let idx = 0; idx < uploadedFilesList.length; idx++) {
                 const key = uploadedFilesList[idx];
                 if (uploadedFiles[key]) {
@@ -2061,6 +2066,7 @@ document.getElementById('registrationForm')?.addEventListener('submit', async fu
                         const base64 = await fileToBase64(file);
                         fileFormData.append(key, base64);
                         fileFormData.append(key + '_name', file.name);
+                        fileFormData.append(key + '_type', file.type);
                         
                         // UPDATE PROGRESS
                         progressTracker.filesProcessed = idx + 1;
@@ -2079,11 +2085,10 @@ document.getElementById('registrationForm')?.addEventListener('submit', async fu
             Logger.log(`File conversion complete: ${progressTracker.filesProcessed}/${progressTracker.filesTotal} files converted`);
             updateProgressDetailed(70, 'Mengirim File...');
             
-            // KIRIM FILES KE SERVER
-            fileFormData.append('nomorPeserta', result.nomorPeserta);
-            fileFormData.append('action', 'uploadFiles');
-            
+            // ===== KIRIM FILES KE SERVER =====
             Logger.log('Sending files to server...');
+            Logger.log('File FormData keys: ' + Array.from(fileFormData.keys()).join(', '));
+            
             const fileResponse = await fetch(APPS_SCRIPT_URL, {
                 method: 'POST',
                 body: fileFormData
@@ -2097,9 +2102,20 @@ document.getElementById('registrationForm')?.addEventListener('submit', async fu
                 Logger.log('File upload failed: ' + fileResult.message);
                 // Tetap tampilkan sukses karena data sudah tersimpan
                 Logger.log('Note: Data sudah tersimpan meski file upload gagal');
+                // Optional: Tampilkan warning ke user
+                const warningDiv = document.getElementById('submitStatusInfo');
+                if (warningDiv) {
+                    warningDiv.innerHTML = '⚠️ Beberapa file mungkin gagal terupload. Data registrasi tetap tersimpan.';
+                    warningDiv.style.display = 'block';
+                    warningDiv.style.background = '#fff3cd';
+                    warningDiv.style.color = '#856404';
+                }
             }
             
             updateProgressDetailed(85, 'File Terupload!');
+        } else {
+            Logger.log('No files to upload, skipping file upload step');
+            updateProgressDetailed(75, 'Tidak ada file untuk diupload');
         }
         
         Logger.log('Registration process COMPLETE!');
@@ -2107,7 +2123,7 @@ document.getElementById('registrationForm')?.addEventListener('submit', async fu
         
         setTimeout(() => {
             showLoadingOverlay(false);
-            showResultModal(true, 'Registrasi Berhasil!', 'Data Anda telah tersimpan dan dokumen telah diupload.', responseDetails);
+            showResultModal(true, 'Registrasi Berhasil!', 'Data Anda telah tersimpan' + (progressTracker.filesTotal > 0 ? ' dan dokumen telah diupload.' : '.'), responseDetails);
             Logger.log('=== FORM SUBMISSION SUCCESS ===');
         }, 500);
         
