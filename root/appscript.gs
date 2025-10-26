@@ -210,12 +210,10 @@ function handleFileUploadOnly(e) {
   try {
     Logger.log('=== HANDLE FILE UPLOAD START ===');
     
-    const nomorPeserta = e.parameter.nomorPeserta;
-    Logger.log('Nomor Peserta received: ' + nomorPeserta);
-    Logger.log('Type: ' + typeof nomorPeserta);
-    Logger.log('Length: ' + (nomorPeserta ? nomorPeserta.toString().length : 'null'));
+    const nomorPesertaOriginal = e.parameter.nomorPeserta;
+    Logger.log('Nomor Peserta received (original): ' + nomorPesertaOriginal);
     
-    if (!nomorPeserta) {
+    if (!nomorPesertaOriginal) {
       Logger.log('ERROR: nomorPeserta not provided');
       return createResponse(false, 'Nomor peserta tidak ditemukan');
     }
@@ -240,54 +238,59 @@ function handleFileUploadOnly(e) {
       return createResponse(false, 'Tidak ada data registrasi di sheet');
     }
     
-    // ===== DEBUG: Get all nomor peserta untuk comparison =====
+    // ===== GET ALL NOMOR PESERTA =====
     Logger.log('Getting all nomor peserta from column B...');
     const nomorPesertaRange = sheet.getRange(2, 2, lastRow - 1, 1);
     const nomorPesertaValues = nomorPesertaRange.getValues();
     
     Logger.log('Total entries to search: ' + nomorPesertaValues.length);
-    Logger.log('Searching for: "' + nomorPeserta + '" (length: ' + nomorPeserta.toString().length + ')');
     
-    // ===== IMPORTANT: Show last 10 nomor peserta untuk reference =====
-    Logger.log('Last 10 nomor peserta in sheet:');
-    const startIdx = Math.max(0, nomorPesertaValues.length - 10);
-    for (let i = startIdx; i < nomorPesertaValues.length; i++) {
-      const cellValue = nomorPesertaValues[i][0];
-      const cellStr = cellValue.toString().trim();
-      Logger.log(`  Row ${i + 2}: "${cellStr}" (type: ${typeof cellValue}, length: ${cellStr.length})`);
-    }
+    // ===== NORMALIZE SEARCH STRING =====
+    // Handle both formats: "072" dan "72", "K. 187" dan "K. 187"
+    const searchStr = nomorPesertaOriginal.toString().trim();
+    const searchStrNoLeadingZero = parseInt(searchStr) || searchStr; // Convert "072" to 72 if numeric
     
-    // ===== SEARCH: Case-insensitive, trimmed comparison =====
+    Logger.log('Searching for: "' + searchStr + '"');
+    Logger.log('Alternative (no leading zero): "' + searchStrNoLeadingZero + '"');
+    
+    // ===== SEARCH: Try exact match first, then without leading zeros =====
     let targetRow = -1;
-    const searchStr = nomorPeserta.toString().trim().toUpperCase();
-    
-    Logger.log('Search string (normalized): "' + searchStr + '"');
     
     for (let i = 0; i < nomorPesertaValues.length; i++) {
       const cellValue = nomorPesertaValues[i][0];
-      const cellStr = cellValue.toString().trim().toUpperCase();
+      const cellStr = cellValue.toString().trim();
       
-      // Show comparison untuk beberapa baris
-      if (i < 5 || i >= nomorPesertaValues.length - 5) {
-        Logger.log(`Compare: "${cellStr}" (row ${i + 2}) vs "${searchStr}"`);
-      }
-      
+      // Try exact match
       if (cellStr === searchStr) {
         targetRow = i + 2;
-        Logger.log('✓ MATCH FOUND at row ' + targetRow);
+        Logger.log('✓ EXACT MATCH at row ' + targetRow + ': "' + cellStr + '"');
         break;
+      }
+      
+      // Try numeric comparison (handles leading zeros)
+      // e.g., "072" vs "72" both become 72
+      if (!isNaN(searchStr) && !isNaN(cellStr)) {
+        const searchNum = parseInt(searchStr);
+        const cellNum = parseInt(cellStr);
+        
+        if (searchNum === cellNum) {
+          targetRow = i + 2;
+          Logger.log('✓ NUMERIC MATCH at row ' + targetRow + ': cell="' + cellStr + '" (parsed: ' + cellNum + ') vs search="' + searchStr + '" (parsed: ' + searchNum + ')');
+          break;
+        }
       }
     }
     
     if (targetRow === -1) {
       Logger.log('❌ ERROR: No match found!');
-      Logger.log('Full search array (first 20):');
-      for (let i = 0; i < Math.min(20, nomorPesertaValues.length); i++) {
-        Logger.log(`  [${i}] = "${nomorPesertaValues[i][0]}"`);
+      Logger.log('Showing last 10 nomor peserta:');
+      const startIdx = Math.max(0, nomorPesertaValues.length - 10);
+      for (let i = startIdx; i < nomorPesertaValues.length; i++) {
+        Logger.log(`  Row ${i + 2}: "${nomorPesertaValues[i][0]}"`);
       }
       
       return createResponse(false, 
-        'Data registrasi dengan nomor peserta "' + nomorPeserta + '" tidak ditemukan di sheet. ' +
+        'Data registrasi dengan nomor peserta "' + nomorPesertaOriginal + '" tidak ditemukan di sheet. ' +
         'Sistem menemukan ' + nomorPesertaValues.length + ' data registrasi, tapi nomor peserta yang dicari tidak ada.');
     }
     
@@ -295,7 +298,7 @@ function handleFileUploadOnly(e) {
     
     // ===== PROCESS FILE UPLOADS =====
     Logger.log('Processing file uploads...');
-    const fileLinks = processFileUploads(e, e.parameter, nomorPeserta);
+    const fileLinks = processFileUploads(e, e.parameter, nomorPesertaOriginal);
     Logger.log('✓ Files processed: ' + Object.keys(fileLinks).length);
     
     // ===== UPDATE FILE LINKS KE SHEET =====
@@ -309,7 +312,7 @@ function handleFileUploadOnly(e) {
     
     Logger.log('=== HANDLE FILE UPLOAD SUCCESS ===');
     
-    return createResponse(true, 'File berhasil diupload', nomorPeserta, {
+    return createResponse(true, 'File berhasil diupload', nomorPesertaOriginal, {
       filesUploaded: Object.keys(fileLinks).length,
       rowUpdated: targetRow
     });
@@ -322,6 +325,48 @@ function handleFileUploadOnly(e) {
   }
 }
 
+function formatNomorPesertaColumnAsText() {
+  try {
+    Logger.log('=== FORMAT NOMOR PESERTA COLUMN AS TEXT ===');
+    
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const sheet = ss.getSheetByName(SHEET_NAME);
+    
+    // Get entire column B
+    const range = sheet.getRange('B:B');
+    
+    // Set number format to TEXT
+    range.setNumberFormat('@');
+    
+    Logger.log('✓ Column B formatted as TEXT');
+    Logger.log('Note: Leading zeros akan tetap terjaga sekarang');
+    
+  } catch (error) {
+    Logger.log('Error: ' + error.message);
+  }
+}
+
+function convertNomorPesertaWithLeadingZero(nomor) {
+  // Convert "72" to "072" jika numeric
+  // Jangan touch "K. 187" atau format dengan prefix
+  
+  if (!nomor) return nomor;
+  
+  const str = nomor.toString().trim();
+  
+  // Jika ada prefix (e.g., "K. 187", "F. 02")
+  if (str.includes('.')) {
+    return str; // Sudah punya prefix, return as-is
+  }
+  
+  // Jika pure numeric, pad dengan leading zero
+  if (!isNaN(str)) {
+    const num = parseInt(str);
+    return String(num).padStart(3, '0'); // "72" -> "072"
+  }
+  
+  return str;
+}
 
 // ===== UPDATE FILE LINKS TANPA LOCK =====
 function updateFileLinksInSheet(sheet, rowIndex, fileLinks) {
