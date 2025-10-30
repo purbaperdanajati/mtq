@@ -681,6 +681,11 @@ button:disabled {
     color: white;
 }
 
+.loading-content p {
+    white-space: pre-line;  /* ← TAMBAHKAN INI */
+    line-height: 1.6;       /* ← TAMBAHKAN INI untuk spacing yang baik */
+}
+
 .loading-spinner {
     width: 80px;
     height: 80px;
@@ -1714,16 +1719,13 @@ div[style*="display: flex"][style*="gap: 12px"][style*="align-items: center"] {
         flex-wrap: wrap !important;
     }
     
-    div[style*="display: flex"][style*="gap: 15px"][style*="align-items: flex-end"] > div {
-        flex: 1 !important;
-        min-width: 100% !important;
+    div[style*="display: grid"][style*="grid-template-columns: 1fr auto"] {
+        grid-template-columns: 1fr !important;
     }
     
     button[onclick="searchPesertaByNIK()"] {
         width: 100% !important;
-        margin-top: 0 !important;
-        height: auto !important;
-        padding: 16px 35px !important;
+        margin-bottom: 0 !important;
     }
 }
 
