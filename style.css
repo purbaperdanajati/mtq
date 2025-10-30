@@ -1737,3 +1737,48 @@ div[style*="display: flex"][style*="gap: 12px"][style*="align-items: center"] {
         font-size: 0.95em !important;
     }
 }
+
+/* ===== VERSION BADGE ===== */
+.version-badge {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    color: rgba(255, 255, 255, 0.8);
+    padding: 10px 18px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 600;
+    z-index: 998;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    pointer-events: none;
+    -webkit-user-select : none;
+    user-select: none;
+}
+
+.version-badge:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .version-badge {
+        bottom: 15px;
+        left: 15px;
+        padding: 8px 14px;
+        font-size: 0.75em;
+    }
+}
+
+@media (max-width: 480px) {
+    .version-badge {
+        bottom: 12px;
+        left: 12px;
+        padding: 6px 12px;
+        font-size: 0.70em;
+    }
+}
