@@ -1,8 +1,8 @@
 // script.js
 // ===== CONFIGURATION =====
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw8hSYNgBn3SNbR42r0IH34ToWfcfMCFZRs1G710mPcN6ENAr9-DQeJux7lqnP8U6ie/exec';
-const REGISTRATION_START = new Date('2025-10-25T09:00:00+07:00');
-const REGISTRATION_END = new Date('2025-10-30T23:59:59+07:00');
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxI5ESkg8Z6AZYmUJ-M3dKFt7rHvbHtoLZesuuvyp-_znNEcfttKuxSc5O4XV4jb-Oq/exec';
+const REGISTRATION_START = new Date('2025-10-29T00:00:00+07:00');
+const REGISTRATION_END = new Date('2025-11-03T23:59:59+07:00');
 const MAX_FILE_SIZE_MB = 5;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
@@ -1218,6 +1218,34 @@ function updateSubmitButtonState() {
     }
 }
 
+function cleanupFormBeforeSubmit() {
+    Logger.log('=== CLEANUP FORM BEFORE SUBMIT ===');
+    
+    // Remove required dari SEMUA file input yang hidden/tidak ada file
+    for (let i = 1; i <= 5; i++) {
+        // Personal
+        const personalInput = document.getElementById(`personalDoc${i}`);
+        if (personalInput && personalInput.hasAttribute('required')) {
+            personalInput.removeAttribute('required');
+            Logger.log(`Removed required from personalDoc${i}`);
+        }
+    }
+    
+    // Team
+    for (let i = 1; i <= 3; i++) {
+        for (let d = 1; d <= 5; d++) {
+            const teamInput = document.getElementById(`teamDoc${i}_${d}`);
+            if (teamInput && teamInput.hasAttribute('required')) {
+                teamInput.removeAttribute('required');
+                Logger.log(`Removed required from teamDoc${i}_${d}`);
+            }
+        }
+    }
+    
+    Logger.log('=== CLEANUP COMPLETE ===');
+}
+
+
 function checkPersonalCompletion() {
     const reasons = [];
     const tglLahir = document.getElementById('tglLahir').value;
@@ -1806,13 +1834,15 @@ function clearAllDevData() {
 document.getElementById('registrationForm')?.addEventListener('submit', async function(e) {
     e.preventDefault();
     
+    cleanupFormBeforeSubmit();
+    
     Logger.log('=== FORM SUBMISSION START (OPTIMIZED FLOW) ===');
     Logger.log('Request received at: ' + new Date().toISOString());
     
     try {
         // ===== RESET PROGRESS TRACKER =====
         progressTracker.reset();
-        
+
         // ===== STEP 0: BERSIHKAN REQUIRED ATTRIBUTE =====
         Logger.log('STEP 0: Cleaning required attributes from file inputs...');
         
@@ -2038,7 +2068,7 @@ document.getElementById('registrationForm')?.addEventListener('submit', async fu
         
         // ===== STEP 7: UPLOAD FILES (JIKA ADA) =====
         Logger.log('STEP 7: Processing file uploads...');
-        showLoadingOverlay(true, 'Mengupload dokumen...');
+        showLoadingOverlay(true, 'Mengupload dokumen... Jangan tutup/refresh halaman ini.');
         
         progressTracker.currentStep = 1;
         progressTracker.filesTotal = Object.keys(uploadedFiles).length;
@@ -2195,3 +2225,177 @@ if (jenisKelaminEl) {
 });
 
 document.getElementById('kecamatan')?.addEventListener('change', updateSubmitButtonState);
+
+
+async function searchPesertaByNIK() {
+    try {
+        Logger.log('🔍 Starting NIK search...');
+        
+        const nikInput = document.getElementById('searchNIK').value.trim();
+        const searchResultContainer = document.getElementById('searchResultContainer');
+        const searchLoadingIndicator = document.getElementById('searchLoadingIndicator');
+        const searchEmptyState = document.getElementById('searchEmptyState');
+        const searchNotFound = document.getElementById('searchNotFound');
+        const searchResultTable = document.getElementById('searchResultTable');
+        
+        // Validasi input
+        if (!nikInput) {
+            Logger.log('⚠️ NIK tidak diisi');
+            searchResultContainer.style.display = 'none';
+            searchEmptyState.style.display = 'block';
+            alert('Silakan masukkan NIK peserta terlebih dahulu');
+            return;
+        }
+        
+        if (!/^\d{16}$/.test(nikInput)) {
+            Logger.log('⚠️ NIK tidak valid');
+            searchResultContainer.style.display = 'none';
+            searchEmptyState.style.display = 'block';
+            alert('NIK harus terdiri dari 16 digit angka');
+            return;
+        }
+        
+        // Tampilkan loading
+        searchLoadingIndicator.style.display = 'block';
+        searchResultContainer.style.display = 'none';
+        searchEmptyState.style.display = 'none';
+        
+        Logger.log('Searching for NIK: ' + nikInput);
+        
+        // Fetch ALL data
+        const response = await fetch(`${APPS_SCRIPT_URL}?action=getData`);
+        Logger.log('Response status: ' + response.status);
+        
+        const result = await response.json();
+        Logger.log('Data fetched: ' + result.data.length + ' rows');
+        
+        if (!result.success) {
+            Logger.log('❌ Error: ' + result.message);
+            searchLoadingIndicator.style.display = 'none';
+            searchResultContainer.style.display = 'block';
+            searchNotFound.style.display = 'block';
+            searchResultTable.style.display = 'none';
+            return;
+        }
+        
+        // Find rows dengan NIK matching (cek di personal NIK dan member NIKs)
+        const foundRows = [];
+        
+        const nikColIdx = result.headers.indexOf('NIK');
+        const nomorPesertaColIdx = result.headers.indexOf('Nomor Peserta');
+        const cabangColIdx = result.headers.indexOf('Cabang Lomba');
+        const kecamatanColIdx = result.headers.indexOf('Kecamatan');
+        const namaReguColIdx = result.headers.indexOf('Nama Regu/Tim');
+        const namaLengkapColIdx = result.headers.indexOf('Nama Lengkap');
+        const statusColIdx = result.headers.indexOf('Status');
+        const alasanColIdx = result.headers.indexOf('Alasan Ditolak');
+        
+        // Member NIK columns
+        const memberNikCols = [
+            result.headers.indexOf('Anggota Tim #1 - NIK'),
+            result.headers.indexOf('Anggota Tim #2 - NIK'),
+            result.headers.indexOf('Anggota Tim #3 - NIK')
+        ];
+        
+        Logger.log('Searching through ' + result.data.length + ' records...');
+        
+        for (let i = 0; i < result.data.length; i++) {
+            const row = result.data[i];
+            let nikFound = false;
+            
+            // Check personal NIK
+            if (row[nikColIdx] && row[nikColIdx].toString().trim() === nikInput) {
+                nikFound = true;
+            }
+            
+            // Check member NIKs
+            if (!nikFound) {
+                for (let memberColIdx of memberNikCols) {
+                    if (memberColIdx !== -1 && row[memberColIdx] && row[memberColIdx].toString().trim() === nikInput) {
+                        nikFound = true;
+                        break;
+                    }
+                }
+            }
+            
+            // Jika NIK ditemukan, tambahkan ke foundRows
+            if (nikFound) {
+                foundRows.push({
+                    nomorPeserta: row[nomorPesertaColIdx] || '-',
+                    namaTimPeserta: row[namaReguColIdx] && row[namaReguColIdx] !== '-' ? row[namaReguColIdx] : row[namaLengkapColIdx],
+                    cabang: row[cabangColIdx] || '-',
+                    kecamatan: row[kecamatanColIdx] || '-',
+                    status: row[statusColIdx] || 'Menunggu Verifikasi',
+                    alasan: row[alasanColIdx] || '-'
+                });
+                
+                Logger.log('✅ Found match at row ' + (i + 2) + ': ' + row[namaLengkapColIdx]);
+            }
+        }
+        
+        // Hide loading
+        searchLoadingIndicator.style.display = 'none';
+        
+        // Tampilkan hasil
+        if (foundRows.length === 0) {
+            Logger.log('⚠️ No data found for NIK: ' + nikInput);
+            searchResultContainer.style.display = 'block';
+            searchNotFound.style.display = 'block';
+            searchResultTable.style.display = 'none';
+            searchEmptyState.style.display = 'none';
+        } else {
+            Logger.log('✅ Found ' + foundRows.length + ' record(s)');
+            displaySearchResult(foundRows);
+            searchResultContainer.style.display = 'block';
+            searchNotFound.style.display = 'none';
+            searchResultTable.style.display = 'block';
+            searchEmptyState.style.display = 'none';
+        }
+        
+    } catch (error) {
+        Logger.error('Search error:', error.message);
+        
+        const searchLoadingIndicator = document.getElementById('searchLoadingIndicator');
+        searchLoadingIndicator.style.display = 'none';
+        
+        alert('Terjadi kesalahan saat mencari data: ' + error.message);
+    }
+}
+
+function displaySearchResult(data) {
+    Logger.log('Displaying ' + data.length + ' search result(s)');
+    
+    const tbody = document.getElementById('searchResultBody');
+    tbody.innerHTML = '';
+    
+    data.forEach((item, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td><strong>${item.nomorPeserta || '-'}</strong></td>
+            <td>${item.namaTimPeserta || '-'}</td>
+            <td>${item.cabang || '-'}</td>
+            <td>${item.kecamatan || '-'}</td>
+            <td><span class="status-badge ${item.status === 'Ditolak' ? 'status-ditolak' : 'status-' + item.status.toLowerCase().replace(/\s+/g, '-')}">${item.status}</span></td>
+            <td>${item.alasan || '-'}</td>
+        `;
+        tbody.appendChild(row);
+    });
+    
+    Logger.log('✅ Search results displayed');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const nikInput = document.getElementById('searchNIK');
+    if (nikInput) {
+        nikInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchPesertaByNIK();
+            }
+        });
+        
+        nikInput.addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '').slice(0, 16);
+        });
+    }
+}, { once: false });

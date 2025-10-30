@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registrasi MTQ ke-55 Kabupaten Indramayu 2025</title>
-    <link rel="icon" type="image/png" href="../logomtq.png">
+    <link rel="icon" type="image/png" href="logomtq.png">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -21,13 +21,13 @@
     <div class="hero">
         <div class="hero-content">
             <div class="hero-logos">
-                <img src="../logokemenag.png" alt="Logo Kemenag" class="hero-logo hero-logo-kemenag">
-                <img src="../logomtq.png" alt="Logo MTQ" class="hero-logo hero-logo-mtq">
-                <img src="../logoindramayu.png" alt="Logo Indramayu" class="hero-logo hero-logo-indramayu">
+                <img src="logokemenag.png" alt="Logo Kemenag" class="hero-logo hero-logo-kemenag">
+                <img src="logomtq.png" alt="Logo MTQ" class="hero-logo hero-logo-mtq">
+                <img src="logoindramayu.png" alt="Logo Indramayu" class="hero-logo hero-logo-indramayu">
             </div>
             <h1>Musabaqah Tilawatil Qur'an (MTQ)<br>ke-55</h1>
             <p class="hero-subtitle">Tingkat Kabupaten Indramayu - Tahun 2025</p>
-            <p class="hero-date">4-6 November 2025 | Kecamatan Sindang</p>
+            <p class="hero-date">Kecamatan Sindang</p>
         </div>
     </div>
 
@@ -35,7 +35,7 @@
         <div class="nav-tabs">
             <button class="nav-btn active" onclick="showTab('informasi')">ℹ️ Informasi</button>
             <button class="nav-btn" onclick="showTab('registrasi')">✍️ Registrasi</button>
-            <button class="nav-btn" onclick="showTab('pesertaDitolak')">📋 Data Peserta Ditolak</button>
+            <button class="nav-btn" onclick="showTab('pesertaDitolak')">🔍 Cek Data Peserta</button>
         </div>
 
         <!-- INFORMASI TAB -->
@@ -43,7 +43,7 @@
             <h2 class="section-title">ℹ️ Informasi Penting Registrasi MTQ ke-55</h2>
             
             <div class="timeline">
-                <div class="timeline-item">
+                <!-- <div class="timeline-item">
                     <div class="timeline-icon">📅</div>
                     <div class="info-card">
                         <h3>📅 Jadwal Pelaksanaan</h3>
@@ -52,19 +52,20 @@
                         <p><strong>Pengambilan Nomor Peserta & Maqra:</strong> 1 November 2025</p>
                         <p><strong>Pelaksanaan MTQ:</strong> 4-6 November 2025</p>
                     </div>
-                </div>
+                </div> -->
 
                 <div class="timeline-item">
                     <div class="timeline-icon">📋</div>
                     <div class="info-card">
-                        <h3>📋 Dokumen yang Diperlukan (untuk SETIAP peserta/anggota)</h3>
+                        <h3>📋 Dokumen yang Diperlukan (untuk SETIAP peserta)</h3>
+                        <p><strong>⚠️ Pastikan seluruh dokumen berikut sudah siap sebelum mengisi formulir pendaftaran:</strong></p>
                         <p><strong>Dokumen Wajib:</strong></p>
-                        <p>a. <strong>Surat Mandat/Rekomendasi</strong> - Ditandatangani oleh Ketua LPTQ Kecamatan</p>
-                        <p>b. <strong>KTP/KK/KIA</strong> - Diterbitkan maksimal 6 bulan sebelum 1 November 2025</p>
-                        <p>c. <strong>Pas Photo Terbaru</strong> - Latar belakang biru</p>
+                        <p>a. Surat Mandat/Rekomendasi - Ditandatangani oleh Ketua LPTQ Kecamatan</p>
+                        <p>b. KTP/KK/KIA - Diterbitkan maksimal 6 bulan sebelum 1 November 2025</p>
+                        <p>c. Pas Photo Terbaru - Latar belakang biru</p>
                         <p><strong>Dokumen Opsional (jika ada):</strong></p>
-                        <p>d. <strong>Sertifikat Kejuaraan</strong> - Dari MTQ Tingkat Kecamatan</p>
-                        <p>e. <strong>Foto Buku Tabungan</strong> - Menunjukkan nomor rekening atas nama peserta</p>
+                        <p>d. Sertifikat Kejuaraan - Dari MTQ Tingkat Kecamatan</p>
+                        <p>e. Foto Buku Tabungan - Menunjukkan nomor rekening atas nama peserta</p>
                     </div>
                 </div>
 
@@ -423,6 +424,7 @@
             </div>
 
             <div id="pesertaDitolakOpen" style="display: none;">
+                <div id="rejectedDataSection" style="margin-bottom: 60px;">
                 <h2 class="section-title">📋 Data Peserta dengan Status Ditolak</h2>
                 <div id="pageLoadingIndicator" class="page-loading-container" style="display: none;">
                     <div class="page-loading-content">
@@ -466,6 +468,62 @@
 
                 <div id="emptyState" style="text-align: center; padding: 60px 40px; color: #999;">
                     <p style="font-size: 1.2em; margin-bottom: 20px;">📋 Tekan tombol "Muat Ulang Data" untuk menampilkan data peserta yang ditolak</p>
+                </div>
+            </div>
+
+            <!-- ===== BAGIAN 2: PENCARIAN DATA PESERTA BERDASARKAN NIK ===== -->
+            <div id="searchDataSection">
+                <h2 class="section-title">🔍 Cari Data Peserta Berdasarkan NIK</h2>
+                    <div style="display: flex; gap: 15px; align-items: flex-end; margin-bottom: 30px; flex-wrap: nowrap;">
+                        <!-- INPUT NIK -->
+                        <div style="flex: 1; min-width: 0;">
+                            <label for="searchNIK" style="display: block; margin-bottom: 12px; color: var(--primary); font-weight: 700; font-size: 1em;">Masukkan NIK Peserta</label>
+                            <input type="text" id="searchNIK" name="searchNIK" maxlength="16" inputmode="numeric" placeholder="16 digit NIK" style="width: 100%; padding: 16px 20px; border: 2px solid rgba(5, 150, 105, 0.2); border-radius: 15px; font-size: 1.02em; transition: all 0.3s ease; font-family: inherit; background: rgba(255, 255, 255, 0.9); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);">
+                            <small style="font-size: 0.85em; color: #666; display: block; margin-top: 5px;">Contoh: 3276012345678901</small>
+                        </div>
+                        
+                        <!-- BUTTON CARI -->
+                        <button type="button" class="btn-submit" onclick="searchPesertaByNIK()" style="height: 50px; padding: 0 35px; white-space: nowrap; flex-shrink: 0; margin-bottom: 0; margin-top: 29px;">
+                            🔍 Cari
+                        </button>
+                    </div>
+
+                <div id="searchLoadingIndicator" class="page-loading-container" style="display: none;">
+                    <div class="page-loading-content">
+                        <div class="page-loading-spinner"></div>
+                        <p class="page-loading-text">⏳ Mencari data...</p>
+                    </div>
+                </div>
+
+                <div id="searchResultContainer" style="display: none;">
+                    <div id="searchNotFound" style="display: none; text-align: center; padding: 40px; background: linear-gradient(135deg, rgba(254, 243, 199, 0.9), rgba(253, 230, 138, 0.9)); border-radius: 15px; border-left: 5px solid var(--warning);">
+                        <p style="font-size: 1.2em; color: #856404; margin: 0;">⚠️ Data dengan NIK tersebut tidak ditemukan</p>
+                    </div>
+
+                    <div id="searchResultTable" style="display: none;">
+                        <div class="table-wrapper">
+                            <table class="rejected-data-table">
+                                <thead>
+                                    <tr>
+                                        <th>No</th>
+                                        <th>Nomor Peserta</th>
+                                        <th>Nama Tim / Peserta</th>
+                                        <th>Cabang</th>
+                                        <th>Kecamatan</th>
+                                        <th>Status</th>
+                                        <th>Alasan Ditolak</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="searchResultBody">
+                                    <!-- DATA AKAN DIISI OLEH JAVASCRIPT -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="searchEmptyState" style="text-align: center; padding: 60px 40px; color: #999;">
+                    <p style="font-size: 1.2em; margin-bottom: 20px;">🔍 Masukkan NIK peserta dan klik tombol "Cari"</p>
                 </div>
             </div>
         </div>
